@@ -111,7 +111,8 @@ public class Table implements Comparable<Table>, Serializable {
 			Page page = loadPage(i);
 			boolean modified = false;
 			
-			for (Row row : page.getRows()) {
+			for (int j = 0; j < page.getRows().length; j++) {
+				Row row = page.getRows()[j];
 				if (row == null)
 					continue;
 
@@ -122,7 +123,7 @@ public class Table implements Comparable<Table>, Serializable {
 				}
 
 				if(evaluate(truthValues, operator)) {
-					row = null;
+					page.getRows()[j] = null;
 					modified = true;
 				}
 			}
@@ -157,7 +158,7 @@ public class Table implements Comparable<Table>, Serializable {
 					result.addRow(row);
 			}
 		}
-
+		
 		return result;
 	}
 

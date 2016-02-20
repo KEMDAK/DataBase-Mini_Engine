@@ -181,34 +181,95 @@ public class Main {
 		// selecting
 
 
-		Hashtable<String,Object> stblColNameValue = new Hashtable<String,Object>();
-		stblColNameValue.put("ID", Integer.valueOf( "550" ) );
-		stblColNameValue.put("Age", Integer.valueOf( "20" ) );
-
-		long startTime = System.currentTimeMillis();
-		Iterator myIt = myDB.selectFromTable("Student", stblColNameValue,"AND");
-		long endTime   = System.currentTimeMillis();
-		long totalTime = endTime - startTime;
-		System.out.println(totalTime);
-		while(myIt.hasNext()) {
-			System.out.println(myIt.next());
-		}
-
-		System.out.println("Next Query:- ");
+//		Hashtable<String,Object> stblColNameValue = new Hashtable<String,Object>();
+//		stblColNameValue.put("ID", Integer.valueOf( "550" ) );
+//		stblColNameValue.put("Age", Integer.valueOf( "20" ) );
+//
+//		long startTime = System.currentTimeMillis();
+//		Iterator myIt = myDB.selectFromTable("Student", stblColNameValue,"AND");
+//		long endTime   = System.currentTimeMillis();
+//		long totalTime = endTime - startTime;
+//		System.out.println(totalTime);
+//		while(myIt.hasNext()) {
+//			System.out.println(myIt.next());
+//		}
+//
+//		System.out.println("Next Query:- ");
+//		
+//		// feel free to add more tests
+//		Hashtable<String,Object> stblColNameValue3 = new Hashtable<String,Object>();
+//		stblColNameValue3.put("Name", "m7");
+//		stblColNameValue3.put("Faculty_ID", Integer.valueOf( "7" ) );
+//
+//		long startTime2 = System.currentTimeMillis();
+//		Iterator myIt2 = myDB.selectFromTable("Major", stblColNameValue3,"AND");
+//		long endTime2   = System.currentTimeMillis();
+//		long totalTime2 = endTime - startTime;
+//		System.out.println(totalTime2);
+//		while(myIt2.hasNext()) {
+//			System.out.println(myIt2.next());
+//		}
 		
-		// feel free to add more tests
-		Hashtable<String,Object> stblColNameValue3 = new Hashtable<String,Object>();
-		stblColNameValue3.put("Name", "m7");
-		stblColNameValue3.put("Faculty_ID", Integer.valueOf( "7" ) );
+		
+//		Hashtable<String, Object> ht = new Hashtable<>();
+//		ht.put("ID", Integer.valueOf( "2005" ) );
+//		ht.put("Name", "Computer Science & Engineering");
+//		ht.put("Faculty_ID", Integer.valueOf( "1" ) );
+//		myDB.insertIntoTable("Major", ht);
+//		
+//		Hashtable<String, Object> ht2 = new Hashtable<>();
+//		ht2.put("ID", Integer.valueOf( "2006" ) );
+//		ht2.put("Name", "Pharmacy");
+//		ht2.put("Faculty_ID", Integer.valueOf( "1" ) );
+//		myDB.insertIntoTable("Major", ht2);
+		
+		Hashtable<String, Object> hash = new Hashtable<>();
+		hash.put("Faculty_ID", 1);
+		Iterator it = myDB.selectFromTable("Major", hash, "AND");
+		while(it.hasNext())
+			System.out.println(it.next());
+		
+		System.out.println("After Deleting");
+		
+		Hashtable<String, Object> stblColNameValue3 = new Hashtable<String,Object>();
+		stblColNameValue3.put("Faculty_ID", 1);
+		stblColNameValue3.put("Name", "Computer Science & Engineering");
+		myDB.deleteFromTable("Major", stblColNameValue3, "AND");
+		
+		it = myDB.selectFromTable("Major", hash, "AND");
+		while(it.hasNext())
+			System.out.println(it.next());
 
-		long startTime2 = System.currentTimeMillis();
-		Iterator myIt2 = myDB.selectFromTable("Major", stblColNameValue3,"AND");
-		long endTime2   = System.currentTimeMillis();
-		long totalTime2 = endTime - startTime;
-		System.out.println(totalTime2);
-		while(myIt2.hasNext()) {
-			System.out.println(myIt2.next());
-		}
+		
+//		stblColNameValue3 = new Hashtable<String,Object>();
+//		stblColNameValue3.put("Name", "m7");
+//
+//		myIt2 = myDB.selectFromTable("Major", stblColNameValue3,"AND");
+//		System.out.println(totalTime2);
+//		while(myIt2.hasNext()) {
+//			System.out.println(myIt2.next());
+//		}
+		
+//		System.out.println("After updating:-");
+//		
+//		Hashtable<String, Object> ht = new Hashtable<>();
+//		ht.put("Age", 50);
+//		ht.put("GPA", 0.0);
+//		ht.put("Last_Name", "Mohsen");
+//		
+//		myDB.updateTable("Student", "550", ht);
+//		
+//		stblColNameValue = new Hashtable<String,Object>();
+//		stblColNameValue.put("ID", Integer.valueOf( "550" ) );
+//
+//		myIt = myDB.selectFromTable("Student", stblColNameValue,"AND");
+//
+//		System.out.println(totalTime);
+//		while(myIt.hasNext()) {
+//			System.out.println(myIt.next());
+//		}
+		
+		
 	}
 
 }
