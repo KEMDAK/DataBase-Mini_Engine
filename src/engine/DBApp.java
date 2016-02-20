@@ -42,7 +42,7 @@ public class DBApp {
 
 			MaximumRowsCountinPage = Integer.parseInt(properties.getProperty("MaximumRowsCountinPage"));
 			BPlusTreeN = Integer.parseInt(properties.getProperty("BPlusTreeN"));
-						
+
 			boolean exists = new File("data/tables.class").exists();
 
 			if(exists){
@@ -85,7 +85,7 @@ public class DBApp {
 				sb.append(",");
 				sb.append((strKeyColName.equals(entry.getKey())) + "");
 				sb.append(",");
-				
+
 				//not considering compounded primary key
 
 				if(entry.getKey().equals(strKeyColName)){
@@ -152,19 +152,19 @@ public class DBApp {
 				throw new TableNotFoundException(strTableName);
 			if(!checkTable(strTableName, htblColNameValue))
 				throw new TypeMismatchException();
-			
+
 			Hashtable<String, Object> key = new Hashtable<>();
 			String PK = tables.get(strTableName).getPrimarykey();
 			Object PKValue = htblColNameValue.get(PK);
 			if(PKValue == null)
 				throw new MissingPrimaryKeyException();
-			
+
 			key.put(PK, PKValue);
 			if(((RowIterator) selectFromTable(strTableName, key, "OR")).size() != 0)
 				throw new DuplicatePrimaryKeyException();
 
 			// NOT considering Integrity constraints 
-			
+
 			Table table = tables.get(strTableName);
 			table.addRecord(htblColNameValue);
 
@@ -186,7 +186,23 @@ public class DBApp {
 
 	public void updateTable(String strTableName, String strKey,
 			Hashtable<String,Object> htblColNameValue) {
+		try {
+			if(!tables.containsKey(strTableName))
+				throw new TableNotFoundException(strTableName);
+			if(!checkTable(strTableName, htblColNameValue))
+				throw new TypeMismatchException();
+			
+			Table table = tables.get(strTableName);
 
+			table.updateRecord(strKey, htblColNameValue);
+			
+		} catch (TableNotFoundException e) {
+			System.err.println(e.getMessage());
+			e.printStackTrace();
+		} catch (TypeMismatchException e) {
+			System.err.println(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	public void deleteFromTable(String strTableName, Hashtable<String,Object> htblColNameValue, 
@@ -302,11 +318,11 @@ public class DBApp {
 
 		throw new UnsupportedDataTypeException(className);
 	}
-	
+
 	public static int getMaximumRowsCountinPage() {
 		return MaximumRowsCountinPage;
 	}
-	
+
 	public static int getBPlusTreeN() {
 		return BPlusTreeN;
 	}
