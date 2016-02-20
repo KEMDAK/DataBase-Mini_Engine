@@ -54,7 +54,7 @@ public class Table implements Comparable<Table>, Serializable {
 
 	public void addRecord(Hashtable<String, Object> values){
 		values.put("TouchDate", new Date());
-		
+
 		int pageNumber = nextFree / DBApp.getMaximumRowsCountinPage();
 		int index = nextFree % DBApp.getMaximumRowsCountinPage();
 
@@ -67,26 +67,90 @@ public class Table implements Comparable<Table>, Serializable {
 		curPage.addRecord(index, values);
 
 		updatePage(curPage);
-		
+
 		nextFree++;
 	}
+
+
+	public void updateRecord(String strKey, Hashtable<String,Object> htblColNameValue){
+		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;
+		if(nextFree % DBApp.getMaximumRowsCountinPage() == 0)
+			totalNumberOfPages--;
+
+		for (int i = 0; i < totalNumberOfPages; i++) {
+			Page page = loadPage(i);
+			
+			boolean found = false;
+
+			for (Row row : page.getRows()) {
+				if(row == null)
+					continue;
+
+				if(row.getValues().get(primarykey).toString().equals(strKey)){
+					for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+						row.getValues().put(entry.getKey(), entry.getValue());
+					}
+					
+					row.getValues().put("TouchDate", new Date());
+
+					found = true;
+				}
+			}
+
+			if(found){
+				updatePage(page);
+			}
+		}
+	}
 	
+	public void deleteRecord(Hashtable<String,Object> values, String operator) {
+		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;
+		if(nextFree % DBApp.getMaximumRowsCountinPage() == 0)
+			totalNumberOfPages--;
+
+		for (int i = 0; i < totalNumberOfPages; i++) {
+			Page page = loadPage(i);
+			boolean modified = false;
+			
+			for (int j = 0; j < page.getRows().length; j++) {
+				Row row = page.getRows()[j];
+				if (row == null)
+					continue;
+
+				ArrayList<Boolean> truthValues = new ArrayList<>();
+
+				for (Entry<String, Object> entry : values.entrySet()) {
+					truthValues.add(equalObject(entry.getValue(), row.getValues().get(entry.getKey())));
+				}
+
+				if(evaluate(truthValues, operator)) {
+					page.getRows()[j] = null;
+					modified = true;
+				}
+			}
+
+			if (modified)
+				updatePage(page);
+		}
+	}
+
+
 	public RowIterator selectRecords(Hashtable<String,Object> htblColNameValue, String strOperator){
 		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;
 		if(nextFree % DBApp.getMaximumRowsCountinPage() == 0)
 			totalNumberOfPages--;
-		
+
 		RowIterator result = new RowIterator();
-		
+
 		for (int i = 0; i < totalNumberOfPages; i++) {
 			Page page = loadPage(i);
-			
+
 			for (Row row : page.getRows()) {
 				if(row == null)
-					break;
-				
+					continue;
+
 				ArrayList<Boolean> truthValues = new ArrayList<>();
-				
+
 				for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
 					truthValues.add(equalObject(entry.getValue(), row.getValues().get(entry.getKey())));
 				}
@@ -95,10 +159,10 @@ public class Table implements Comparable<Table>, Serializable {
 					result.addRow(row);
 			}
 		}
-
+		
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(Object o) {
 		return this.tableName.equalsIgnoreCase(((Table) o).tableName);
@@ -108,38 +172,38 @@ public class Table implements Comparable<Table>, Serializable {
 	public int compareTo(Table o) {
 		return this.tableName.compareTo(o.tableName);
 	}
-	
+
 	public static boolean evaluate(ArrayList<Boolean> truthValues, String operator){
 		if(operator.equals("OR")){
 			boolean res = false;
-			
+
 			for (Boolean value : truthValues) {
 				res |= value;
-				
+
 				if(res)
 					break;
 			}
-			
+
 			return res;
 		}
 		else{
 			boolean res = true;
-			
+
 			for (Boolean value : truthValues) {
 				res &= value;
-				
+
 				if(!res)
 					break;
 			}
-			
+
 			return res;
 		}
 	}
-	
+
 	public static boolean equalObject(Object x, Object y){
 		if(!x.getClass().equals(y.getClass()))
 			return false;
-		
+
 		if(x instanceof Integer)
 			return ((Integer) x).equals((Integer) y);
 		if(x instanceof String)
@@ -150,10 +214,10 @@ public class Table implements Comparable<Table>, Serializable {
 			return ((Boolean) x).equals((Boolean) y);
 		if(x instanceof Date)
 			return ((Date) x).equals((Date) y);
-		
+
 		return false;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Table name: " + tableName + ", " + "index: " + nextFree;
