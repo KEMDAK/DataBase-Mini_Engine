@@ -71,7 +71,9 @@ public class Table implements Comparable<Table>, Serializable {
 		nextFree++;
 	}
 
-	public void deleteRecord(Hashtable<String,Object> values, String operator) {
+
+	public void updateRecord(String strKey, Hashtable<String,Object> htblColNameValue){
+		
 		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;
 		if(nextFree % DBApp.getMaximumRowsCountinPage() == 0)
 			totalNumberOfPages--;
@@ -79,7 +81,36 @@ public class Table implements Comparable<Table>, Serializable {
 		for (int i = 0; i < totalNumberOfPages; i++) {
 			Page page = loadPage(i);
 			
+			boolean found = false;
+
+			for (Row row : page.getRows()) {
+				if(row == null)
+					continue;
+
+				if(row.getValues().get(primarykey).toString().equals(strKey)){
+					for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+						row.getValues().put(entry.getKey(), entry.getValue());
+					}
+
+					found = true;
+				}
+			}
+
+			if(found){
+				updatePage(page);
+			}
+		}
+	}
+	
+	public void deleteRecord(Hashtable<String,Object> values, String operator) {
+		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;
+		if(nextFree % DBApp.getMaximumRowsCountinPage() == 0)
+			totalNumberOfPages--;
+
+		for (int i = 0; i < totalNumberOfPages; i++) {
+			Page page = loadPage(i);
 			boolean modified = false;
+			
 			for (Row row : page.getRows()) {
 				if (row == null)
 					continue;
@@ -95,11 +126,12 @@ public class Table implements Comparable<Table>, Serializable {
 					modified = true;
 				}
 			}
-			
+
 			if (modified)
 				updatePage(page);
 		}
 	}
+
 
 	public RowIterator selectRecords(Hashtable<String,Object> htblColNameValue, String strOperator){
 		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;

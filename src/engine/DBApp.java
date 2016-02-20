@@ -186,7 +186,23 @@ public class DBApp {
 
 	public void updateTable(String strTableName, String strKey,
 			Hashtable<String,Object> htblColNameValue) {
+		try {
+			if(!tables.containsKey(strTableName))
+				throw new TableNotFoundException(strTableName);
+			if(!checkTable(strTableName, htblColNameValue))
+				throw new TypeMismatchException();
+			
+			Table table = tables.get(strTableName);
 
+			table.updateRecord(strKey, htblColNameValue);
+			
+		} catch (TableNotFoundException e) {
+			System.err.println(e.getMessage());
+			e.printStackTrace();
+		} catch (TypeMismatchException e) {
+			System.err.println(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	public void deleteFromTable(String strTableName, Hashtable<String,Object> htblColNameValue, 
