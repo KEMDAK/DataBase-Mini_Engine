@@ -4,6 +4,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 
 import engine.DBApp;
+import engine.RowIterator;
 import exceptions.DBAppException;
 import exceptions.DBEngineException;
 
@@ -177,10 +178,10 @@ public class Main {
 //		
 //		long end = System.currentTimeMillis();
 //		System.out.println("finished inserting in " + (end - start) + " ms.");
-
-		// selecting
-
-
+//
+//		// selecting
+//
+//
 //		Hashtable<String,Object> stblColNameValue = new Hashtable<String,Object>();
 //		stblColNameValue.put("ID", Integer.valueOf( "550" ) );
 //		stblColNameValue.put("Age", Integer.valueOf( "20" ) );
@@ -208,8 +209,7 @@ public class Main {
 //		System.out.println(totalTime2);
 //		while(myIt2.hasNext()) {
 //			System.out.println(myIt2.next());
-//		}
-		
+//		}	
 		
 //		Hashtable<String, Object> ht = new Hashtable<>();
 //		ht.put("ID", Integer.valueOf( "2005" ) );
@@ -222,34 +222,33 @@ public class Main {
 //		ht2.put("Name", "Pharmacy");
 //		ht2.put("Faculty_ID", Integer.valueOf( "1" ) );
 //		myDB.insertIntoTable("Major", ht2);
-		
-		Hashtable<String, Object> hash = new Hashtable<>();
-		hash.put("Faculty_ID", 1);
-		Iterator it = myDB.selectFromTable("Major", hash, "AND");
-		while(it.hasNext())
-			System.out.println(it.next());
-		
-		System.out.println("After Deleting");
-		
-		Hashtable<String, Object> stblColNameValue3 = new Hashtable<String,Object>();
-		stblColNameValue3.put("Faculty_ID", 1);
-		stblColNameValue3.put("Name", "Computer Science & Engineering");
-		myDB.deleteFromTable("Major", stblColNameValue3, "AND");
-		
-		it = myDB.selectFromTable("Major", hash, "AND");
-		while(it.hasNext())
-			System.out.println(it.next());
-
-		
+//		
+//		Hashtable<String, Object> hash = new Hashtable<>();
+//		hash.put("Faculty_ID", 1);
+//		Iterator it = myDB.selectFromTable("Major", hash, "AND");
+//		while(it.hasNext())
+//			System.out.println(it.next());
+//		
+//		System.out.println("After Deleting");
+//		
+//		Hashtable<String, Object> stblColNameValue3 = new Hashtable<String,Object>();
+//		stblColNameValue3.put("Faculty_ID", 1);
+//		stblColNameValue3.put("Name", "Computer Science & Engineering");
+//		myDB.deleteFromTable("Major", stblColNameValue3, "AND");
+//		
+//		it = myDB.selectFromTable("Major", hash, "AND");
+//		while(it.hasNext())
+//			System.out.println(it.next());
+//		
 //		stblColNameValue3 = new Hashtable<String,Object>();
 //		stblColNameValue3.put("Name", "m7");
 //
-//		myIt2 = myDB.selectFromTable("Major", stblColNameValue3,"AND");
-//		System.out.println(totalTime2);
+//		Iterator myIt2 = myDB.selectFromTable("Major", stblColNameValue3,"AND");
+////		System.out.println(totalTime2);
 //		while(myIt2.hasNext()) {
 //			System.out.println(myIt2.next());
 //		}
-		
+//		
 //		System.out.println("After updating:-");
 //		
 //		Hashtable<String, Object> ht = new Hashtable<>();
@@ -269,7 +268,9 @@ public class Main {
 //			System.out.println(myIt.next());
 //		}
 		
-		
+		Hashtable<String,Object> stblColNameValue = new Hashtable<String,Object>();
+		stblColNameValue.put("Age", Integer.valueOf( "23" ) );
+		myDB.updateTable("Student","550",stblColNameValue);
 	}
 
 }

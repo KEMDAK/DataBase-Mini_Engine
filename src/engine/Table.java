@@ -72,7 +72,7 @@ public class Table implements Comparable<Table>, Serializable {
 	}
 
 
-	public void updateRecord(String strKey, Hashtable<String,Object> htblColNameValue){
+	public void updateRecord(Object strKey, Hashtable<String,Object> htblColNameValue){
 		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;
 		if(nextFree % DBApp.getMaximumRowsCountinPage() == 0)
 			totalNumberOfPages--;
@@ -86,7 +86,7 @@ public class Table implements Comparable<Table>, Serializable {
 				if(row == null)
 					continue;
 
-				if(row.getValues().get(primarykey).toString().equals(strKey)){
+				if(equalObject(strKey, row.getValues().get(primarykey))){
 					for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
 						row.getValues().put(entry.getKey(), entry.getValue());
 					}

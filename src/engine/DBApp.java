@@ -184,7 +184,7 @@ public class DBApp {
 		}
 	}
 
-	public void updateTable(String strTableName, String strKey,
+	public void updateTable(String strTableName, Object strKey,
 			Hashtable<String,Object> htblColNameValue) {
 		try {
 			if(!tables.containsKey(strTableName))
