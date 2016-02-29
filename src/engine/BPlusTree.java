@@ -78,7 +78,7 @@ public class BPlusTree<E> {
 			Node newNodeOfMe = current.migrateLeaf((n % 2 == 0)? rules[LEAF][MIN_KEYS] + 1 : rules[LEAF][MIN_KEYS]);
 			newNodeOfMe.keys[newNodeOfMe.keys.length - 1] = newNodeOfMe.keys[0];
 			newNodeOfMe.pointers[newNodeOfMe.pointers.length - 1] = current;
-			
+
 			return newNodeOfMe;
 		}
 		else {
@@ -111,42 +111,40 @@ public class BPlusTree<E> {
 	public static int floor(double d) {
 		return (int) d;
 	}
-	
+
 	public String toString() {
 		String res = "";
 		if (root == null)
 			return res;
-		
+
 		Queue<Node> q = new LinkedList<Node>();
 		q.add(root);
-		
-		
+		int c = 1;
+		int tempC = 0;
+
 		while(!q.isEmpty()) {
-			
+			Node current = q.remove();
+			if (c == 0 || (c == 1 && current != root)) {
+				res += '\n';
+				c = tempC;
+				tempC = 0;
+			}
+			else
+				c--;
+			res += current.toString() + " ";
+
+			if (!current.isLeaf) {
+				for (int i = 0; i <= current.no_of_keys; i++) {
+					Node n = (Node) current.pointers[i];
+					q.add(n);
+					tempC++;
+				}
+			}
+
+
+
 		}
-//		q.add(null);
-//		while(!q.isEmpty()) {
-//			Node cur = q.remove();
-//			
-//			if (cur == null) {
-//				res += '\n';
-//				continue;
-//			}
-//			else 
-//				res += ' ';
-//			
-//			res += cur.toString();
-//			if (!cur.isLeaf) {
-////				for (Object n : cur.pointers) {
-//					for (int i = 0; i < cur.no_of_keys + 1; i++) {
-//						
-//					Node node = (Node) cur.pointers[i];
-//					q.add(node);
-//				}
-//				q.add(null);
-//			}
-//		}
-		
+
 		return res;
 	}
 
@@ -282,7 +280,7 @@ public class BPlusTree<E> {
 
 			return newNode;
 		}
-		
+
 		public Node migrateNonLeaf(int k){
 			Node newNode = new Node<>(keys.length - 1, isLeaf);
 
@@ -299,7 +297,7 @@ public class BPlusTree<E> {
 
 			return newNode;
 		}
-		
+
 		public String toString() {
 			String res = "[";
 			for (int i = 0; i < keys.length - 1; i++) {
@@ -307,7 +305,7 @@ public class BPlusTree<E> {
 				if (i > 0) {
 					res += "|";
 				}
-				
+
 				if (i < no_of_keys)
 					res += e.toString();
 				else
@@ -315,7 +313,6 @@ public class BPlusTree<E> {
 			}
 			res += ']';
 			return res;
-//			return Arrays.toString(keys);
 		}
 	}
 
@@ -326,9 +323,13 @@ public class BPlusTree<E> {
 		b.insert(3, new Page("dummy.class"));
 		b.insert(4, new Page("dummy.class"));
 		b.insert(5, new Page("dummy.class"));
-//		b.insert(0, new Page("dummy.class"));
-//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
-		
+		b.insert(0, new Page("dummy.class"));
+		b.insert(6, new Page("dummy.class"));
+		b.insert(7, new Page("dummy.class"));
+		b.insert(9, new Page("dummy.class"));
+		b.insert(3, new Page("dummy.class"));
+		//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
+
 		System.out.println(b);
 	}
 }
