@@ -175,7 +175,7 @@ public class BPlusTree<E> {
 				int mid = low + (high - low) / 2;
 
 				if(keys[mid].compareTo(target) == 0)
-					break;
+					return (Node) pointers[mid + 1];
 				else if(keys[mid].compareTo(target) < 0)
 					low = mid + 1;
 				else
@@ -328,6 +328,8 @@ public class BPlusTree<E> {
 		b.insert(7, new Page("dummy.class"));
 		b.insert(9, new Page("dummy.class"));
 		b.insert(3, new Page("dummy.class"));
+		b.insert(6, new Page("dummy.class"));
+		b.insert(-1, new Page("dummy.class"));
 		//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
 
 		System.out.println(b);
