@@ -1,8 +1,11 @@
 package engine;
 
-import java.util.Arrays;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import javax.swing.JPopupMenu.Separator;
 
 public class BPlusTree<E> {
 	private int n;
@@ -157,7 +160,7 @@ public class BPlusTree<E> {
 
 		public Node(int n, boolean isLeaf) {
 			this.keys = new Comparable[n + 1];
-			this.pointers = new Node[n + 3];
+			this.pointers = new Object[n + 3];
 			this.magicPointer = null;
 			this.isLeaf = isLeaf;
 			this.no_of_keys = 0;
@@ -185,7 +188,7 @@ public class BPlusTree<E> {
 			return (Node) pointers[high + 1];
 		}
 
-		public Page searchLeaf(E target){
+		public Object searchLeaf(E target){
 			int low = 0;
 			int high = no_of_keys - 1;
 
@@ -193,7 +196,7 @@ public class BPlusTree<E> {
 				int mid = low + (high - low) / 2;
 
 				if(keys[mid].compareTo(target) == 0)
-					return (Page) pointers[mid];
+					return pointers[mid];
 				else if(keys[mid].compareTo(target) < 0)
 					low = mid + 1;
 				else
@@ -216,9 +219,25 @@ public class BPlusTree<E> {
 					keys[i] = keys[i - 1];
 					pointers[i] = pointers[i - 1];
 				}
+				else if(keys[i - 1].compareTo(value) == 0) {
+					if(!(pointers[i - 1] instanceof ArrayList)){
+						Page temp = (Page) pointers[i - 1];
+						pointers[i - 1] = (Object) (new ArrayList<>());
+						((ArrayList<Page>) pointers[i - 1]).add(temp);
+					}
+					
+					((ArrayList<Page>) pointers[i - 1]).add(page);
+					
+					for (int j = i; j < no_of_keys; j++) {
+						keys[j] = keys[j + 1];
+						pointers[j] = pointers[j + 1];
+					}
+					
+					return true;
+				}
 				else {
 					keys[i] = (Comparable<E>) value;
-					pointers[i] = null; // change
+					pointers[i] = page;
 					break;
 				}
 			}
@@ -226,7 +245,7 @@ public class BPlusTree<E> {
 			no_of_keys++;
 			if(i == 0){
 				keys[0] = (Comparable<E>) value;
-				pointers[0] = null; // change
+				pointers[0] = (Object) page;
 			}
 
 			return valid;
@@ -276,6 +295,7 @@ public class BPlusTree<E> {
 
 			no_of_keys -= k;
 			newNode.no_of_keys = k;
+			newNode.magicPointer = magicPointer;
 			magicPointer = newNode;
 
 			return newNode;
@@ -298,6 +318,76 @@ public class BPlusTree<E> {
 			return newNode;
 		}
 
+//		public void rotateLeft(Node rightNode) {
+//			Node parent = (Node) pointers[pointers.length - 1];
+//			int separatorIndex = (int) keys[keys.length - 1];
+//
+//			//rotate the needed key with its pointers
+//			keys[no_of_keys] = parent.keys[separatorIndex];
+//			if(isLeaf){
+//				pointers[no_of_keys++] = rightNode.pointers[0];
+//			}
+//			else{
+//				pointers[no_of_keys] = rightNode.pointers[0];
+//				pointers[++no_of_keys] = rightNode.pointers[1];
+//			}
+//
+//			//shift the elements in the right sibling with their pointers
+//			for (int i = 1; i < rightNode.no_of_keys; i++){
+//				rightNode.keys[i - 1] = rightNode.keys[i];
+//			}
+//			
+//			if(isLeaf){
+//				for (int i = 1; i < rightNode.no_of_keys; i++) {
+//					rightNode.pointers[i - 1] = rightNode.pointers[i];
+//				}
+//			}
+//			else{
+//				for (int i = 2; i <= rightNode.no_of_keys; i++) {
+//					rightNode.pointers[i - 2] = rightNode.pointers[i];
+//				}
+//			}
+//			rightNode.no_of_keys--;
+//			
+//			//change the separator
+//			parent.keys[separatorIndex] = rightNode.keys[0];
+//		}
+
+//		public void rotateRight(Node LeftNode) {
+//			Node parent = (Node) pointers[pointers.length - 1];
+//			int separatorIndex = (int) keys[keys.length - 1];
+//
+//			//rotate the needed key with its pointers
+//			keys[no_of_keys] = parent.keys[separatorIndex];
+//			if(isLeaf){
+//				pointers[no_of_keys++] = rightNode.pointers[0];
+//			}
+//			else{
+//				pointers[no_of_keys] = rightNode.pointers[0];
+//				pointers[++no_of_keys] = rightNode.pointers[1];
+//			}
+//
+//			//shift the elements in the right sibling with their pointers
+//			for (int i = 1; i < rightNode.no_of_keys; i++){
+//				rightNode.keys[i - 1] = rightNode.keys[i];
+//			}
+//			
+//			if(isLeaf){
+//				for (int i = 1; i < rightNode.no_of_keys; i++) {
+//					rightNode.pointers[i - 1] = rightNode.pointers[i];
+//				}
+//			}
+//			else{
+//				for (int i = 2; i <= rightNode.no_of_keys; i++) {
+//					rightNode.pointers[i - 2] = rightNode.pointers[i];
+//				}
+//			}
+//			rightNode.no_of_keys--;
+//			
+//			//change the separator
+//			parent.keys[separatorIndex] = rightNode.keys[0];
+//		}
+		
 		public String toString() {
 			String res = "[";
 			for (int i = 0; i < keys.length - 1; i++) {
@@ -307,7 +397,18 @@ public class BPlusTree<E> {
 				}
 
 				if (i < no_of_keys)
-					res += e.toString();
+					if(isLeaf && pointers[i] instanceof ArrayList){
+//						res += ((ArrayList<Page>) pointers[i]).toString();
+						
+						res += "{";
+						for (int j = 0; j < ((ArrayList<Page>) pointers[i]).size() - 1; j++) {
+							res += e.toString() + ", ";
+						}
+						
+						res += e.toString() + "}";
+					}
+					else
+						res += e.toString();
 				else
 					res += null;
 			}
@@ -315,9 +416,9 @@ public class BPlusTree<E> {
 			return res;
 		}
 	}
-
+	
 	public static void main(String[] args) {
-		BPlusTree<Integer> b = new BPlusTree<>(2);
+		BPlusTree<Integer> b = new BPlusTree<>(3);
 		b.insert(2, new Page("dummy.class"));
 		b.insert(1, new Page("dummy.class"));
 		b.insert(3, new Page("dummy.class"));
@@ -330,7 +431,9 @@ public class BPlusTree<E> {
 		b.insert(3, new Page("dummy.class"));
 		b.insert(6, new Page("dummy.class"));
 		b.insert(-1, new Page("dummy.class"));
-		//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
+		b.insert(3, new Page("dummy.class"));
+//				System.out.println(((Node)((Node)b.root.pointers[0]).pointers[0]).magicPointer.magicPointer.magicPointer.magicPointer.magicPointer);
+//				System.out.println();
 
 		System.out.println(b);
 	}
