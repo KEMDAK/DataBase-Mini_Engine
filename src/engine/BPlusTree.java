@@ -298,6 +298,10 @@ public class BPlusTree<E> {
 			return newNode;
 		}
 
+		public Node rotateLeft(Node rightNode, ) {
+			
+		}
+		
 		public String toString() {
 			String res = "[";
 			for (int i = 0; i < keys.length - 1; i++) {
@@ -318,18 +322,19 @@ public class BPlusTree<E> {
 
 	public static void main(String[] args) {
 		BPlusTree<Integer> b = new BPlusTree<>(2);
-		b.insert(2, new Page("dummy.class"));
+		b.insert(12, new Page("dummy.class"));
+		b.insert(8, new Page("dummy.class"));
 		b.insert(1, new Page("dummy.class"));
-		b.insert(3, new Page("dummy.class"));
-		b.insert(4, new Page("dummy.class"));
+		b.insert(23, new Page("dummy.class"));
 		b.insert(5, new Page("dummy.class"));
-		b.insert(0, new Page("dummy.class"));
-		b.insert(6, new Page("dummy.class"));
 		b.insert(7, new Page("dummy.class"));
+		b.insert(2, new Page("dummy.class"));
+		b.insert(28, new Page("dummy.class"));
 		b.insert(9, new Page("dummy.class"));
-		b.insert(3, new Page("dummy.class"));
-		b.insert(6, new Page("dummy.class"));
-		b.insert(-1, new Page("dummy.class"));
+		b.insert(18, new Page("dummy.class"));
+		b.insert(24, new Page("dummy.class"));
+		b.insert(40, new Page("dummy.class"));
+		b.insert(48, new Page("dummy.class"));
 		//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
 
 		System.out.println(b);
