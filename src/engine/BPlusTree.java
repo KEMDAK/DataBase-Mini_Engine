@@ -1,12 +1,9 @@
 package engine;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
-
-import javax.swing.JPopupMenu.Separator;
 
 public class BPlusTree<E> {
 	private int n;
@@ -116,6 +113,159 @@ public class BPlusTree<E> {
 		}
 	}
 
+	public void delete(E value) {
+		boolean deleted = deleteHelper(root, value);
+
+		if (deleted)
+			return;
+
+		// new root
+		if (root.no_of_keys < rules[ROOT][MIN_KEYS]) 
+			root = root.pointers[0] instanceof Page || root.pointers[0] instanceof ArrayList ? null : (Node) root.pointers[0];
+	}
+
+	public boolean deleteHelper(Node node, E value) {
+		if (node.isLeaf) {
+			int index = Arrays.binarySearch(node.keys, value);
+
+			if (index == -1)
+				return true;
+
+			node.deleteFromNode(index);
+
+			if (node == root)
+				return false;
+
+			if (node.no_of_keys < rules[LEAF][MIN_KEYS]) {
+				Node parent = (Node) node.pointers[node.pointers.length - 1];
+				int separatorIndex = (int) node.keys[node.keys.length - 1];
+
+				Node leftNode = null;
+				if (separatorIndex > -1) {
+					leftNode = (Node) parent.pointers[separatorIndex];
+					if (leftNode.no_of_keys > rules[LEAF][MIN_KEYS]) {
+						node.rotateRight(leftNode);
+						return true;
+					}
+				}
+
+				separatorIndex++;
+				node.keys[node.keys.length - 1] =  (int) node.keys[node.keys.length - 1] + 1;
+
+				Node rightNode = null;
+				if (separatorIndex < parent.no_of_keys) {
+					rightNode = (Node) parent.pointers[separatorIndex + 1];
+					if (rightNode.no_of_keys > rules[LEAF][MIN_KEYS]) {
+						node.rotateLeft(rightNode);
+						return true;
+					}
+				}
+
+				//merge
+				if (leftNode == null) { // merge with right, you are the left
+					node.keys[node.keys.length - 1] = separatorIndex;
+					node.merge(rightNode, false);
+				}
+				else { // merge with left, you are the right
+					node.keys[node.keys.length - 1] = separatorIndex - 1;
+					leftNode.merge(node, true);
+				}
+
+				return false;
+			}
+
+			Node parent = (Node) node.pointers[node.pointers.length - 1];
+			int separatorIndex = (int) node.keys[node.keys.length - 1];
+			if (separatorIndex > -1)
+				parent.keys[separatorIndex] = node.keys[0];
+			return true;
+		}
+		else {
+			int low = 0;
+			int high = node.no_of_keys - 1;
+
+			Node nextNode = null;
+			int separatorIndex = -1;
+			while(low <= high){
+				int mid = low + (high - low) / 2;
+
+				if(node.keys[mid].compareTo(value) == 0) {
+					nextNode = (Node) node.pointers[mid + 1];
+					separatorIndex = mid;
+					break;
+				}
+				else if(node.keys[mid].compareTo(value) < 0)
+					low = mid + 1;
+				else
+					high = mid - 1;
+			}
+
+			if (nextNode == null) {
+				nextNode = (Node) node.pointers[high + 1];
+				separatorIndex = high;
+			}
+
+			nextNode.pointers[nextNode.pointers.length - 1] = node;
+			nextNode.keys[nextNode.keys.length - 1] = separatorIndex;
+
+			boolean deleted = deleteHelper(nextNode, value);
+
+			if (deleted) 	
+				return true;
+
+			separatorIndex = (int) nextNode.keys[nextNode.keys.length - 1];
+
+			node.deleteFromNode(separatorIndex);
+
+			if (node == root)
+				return false;
+
+			if (node.no_of_keys < rules[NON_LEAF][MIN_KEYS]) {
+				Node parent = (Node) node.pointers[node.pointers.length - 1];
+				separatorIndex = (int) node.keys[node.keys.length - 1];
+
+				Node leftNode = null;
+				if (separatorIndex > -1) {
+					leftNode = (Node) parent.pointers[separatorIndex];
+					if (leftNode.no_of_keys > rules[NON_LEAF][MIN_KEYS]) {
+						node.rotateRight(leftNode);
+						return true;
+					}
+				}
+
+				separatorIndex++;
+				node.keys[node.keys.length - 1] =  (int) node.keys[node.keys.length - 1] + 1;
+
+				Node rightNode = null;
+				if (separatorIndex < parent.no_of_keys) {
+					rightNode = (Node) parent.pointers[separatorIndex + 1];
+					if (rightNode.no_of_keys > rules[NON_LEAF][MIN_KEYS]) {
+						node.rotateLeft(rightNode);
+						return true;
+					}
+				}
+
+				//merge
+				if (leftNode == null) { // merge with right, you are the left
+					node.keys[node.keys.length - 1] = separatorIndex;
+					node.merge(rightNode, false);
+				}
+				else { // merge with left, you are the right
+					node.keys[node.keys.length - 1] = separatorIndex - 1;
+					leftNode.merge(node, true);
+				}
+
+				return false;
+			}
+
+			Node parent = (Node) node.pointers[node.pointers.length - 1];
+			separatorIndex = (int) node.keys[node.keys.length - 1];
+			if (separatorIndex > -1)
+				parent.keys[separatorIndex] = node.keys[0];
+			return true;
+		}
+	}
+
 	public static int ceil(double d) {
 		return (int) (d == (int)d ? d : ((int)d)+1);
 	}
@@ -175,7 +325,7 @@ public class BPlusTree<E> {
 			this.no_of_keys = 0;
 		}
 
-		
+
 		//Method used for insertion and find
 		public Object search(E target) {
 			return this.isLeaf ? searchLeaf(target) : searchNonLeaf(target);
@@ -236,14 +386,14 @@ public class BPlusTree<E> {
 						pointers[i - 1] = (Object) (new ArrayList<>());
 						((ArrayList<Page>) pointers[i - 1]).add(temp);
 					}
-					
+
 					((ArrayList<Page>) pointers[i - 1]).add(page);
-					
+
 					for (int j = i; j < no_of_keys; j++) {
 						keys[j] = keys[j + 1];
 						pointers[j] = pointers[j + 1];
 					}
-					
+
 					return true;
 				}
 				else {
@@ -329,49 +479,55 @@ public class BPlusTree<E> {
 			return newNode;
 		}
 
-<<<<<<< HEAD
-		public Node rotateLeft(Node rightNode, ) {
-			
-		}
-		
-=======
-		
 		//Methods used for deletion
+		public void deleteFromNode(int index) {
+
+			for (int i = index + 1; i < no_of_keys; i++) 
+				keys[i - 1] = keys[i];
+
+			int extra = 0;
+			if (!isLeaf)
+				extra++;
+
+			for (int i = index + 1 + extra; i < no_of_keys + extra; i++)
+				pointers[i - 1] = pointers[i];
+
+			no_of_keys--;
+		}
+
+
 		public void rotateLeft(Node rightNode) {
 			Node parent = (Node) pointers[pointers.length - 1];
 			int separatorIndex = (int) keys[keys.length - 1];
 
 			Node leftNode = this;
-			
+
 			//rotate the needed key with its pointers
-			leftNode.keys[leftNode.no_of_keys] = rightNode.keys[0];
 			if(leftNode.isLeaf){
+				leftNode.keys[leftNode.no_of_keys] = rightNode.keys[0];
 				leftNode.pointers[leftNode.no_of_keys++] = rightNode.pointers[0];
 			}
 			else{
-				leftNode.pointers[leftNode.no_of_keys] = rightNode.pointers[0];
-				leftNode.pointers[++leftNode.no_of_keys] = rightNode.pointers[1];
+				leftNode.keys[leftNode.no_of_keys] = parent.keys[separatorIndex];
+				leftNode.pointers[++leftNode.no_of_keys] = rightNode.pointers[0];
 			}
 
-			//shift the elements in the right sibling with their pointers
-			for (int i = 1; i < rightNode.no_of_keys; i++){
-				rightNode.keys[i - 1] = rightNode.keys[i];
-			}
-			
-			if(isLeaf){
-				for (int i = 1; i < rightNode.no_of_keys; i++) {
-					rightNode.pointers[i - 1] = rightNode.pointers[i];
-				}
-			}
-			else{
-				for (int i = 2; i <= rightNode.no_of_keys; i++) {
-					rightNode.pointers[i - 2] = rightNode.pointers[i];
-				}
-			}
-			rightNode.no_of_keys--;
-			
 			//change the separator
 			parent.keys[separatorIndex] = rightNode.keys[0];
+
+			//shift the elements in the right sibling with their pointers
+			for (int i = 1; i < rightNode.no_of_keys; i++)
+				rightNode.keys[i - 1] = rightNode.keys[i];
+
+			int extra = 0;
+			if(!leftNode.isLeaf)
+				extra++;
+
+			for (int i = 1; i < rightNode.no_of_keys + extra; i++) 
+				rightNode.pointers[i - 1] = rightNode.pointers[i];
+
+			rightNode.no_of_keys--;
+
 		}
 
 		public void rotateRight(Node leftNode) {
@@ -379,55 +535,70 @@ public class BPlusTree<E> {
 			int separatorIndex = (int) keys[keys.length - 1];
 
 			Node rightNode = this;
-			
+
 			//shift the elements in the right sibling with their pointers
-			for (int i = rightNode.no_of_keys; i > 0; i--){
+			for (int i = rightNode.no_of_keys; i > 0; i--)
 				rightNode.keys[i] = rightNode.keys[i - 1];
-			}
-			
-			if(isLeaf){
-				for (int i = rightNode.no_of_keys; i > 0; i--){
-					rightNode.pointers[i] = rightNode.pointers[i - 1];
-				}
-			}
-			else{
-				for (int i = rightNode.no_of_keys + 2; i >= 2; i--) {
-					rightNode.pointers[i] = rightNode.pointers[i - 2];
-				}
-			}
+
+			int extra = 0;
+			if (!rightNode.isLeaf)
+				extra++;
+
+			for (int i = rightNode.no_of_keys + extra; i > 0; i--)
+				rightNode.pointers[i] = rightNode.pointers[i - 1];
+
 			rightNode.no_of_keys++;
 
 			//rotate the needed key with its pointers
-			rightNode.keys[0] = leftNode.keys[leftNode.no_of_keys];
-			if(isLeaf){
-				rightNode.pointers[0] = leftNode.pointers[leftNode.no_of_keys--];
+			if(rightNode.isLeaf){
+				rightNode.keys[0] = leftNode.keys[leftNode.no_of_keys - 1];
+				rightNode.pointers[0] = leftNode.pointers[--leftNode.no_of_keys];
+				parent.keys[separatorIndex] = rightNode.keys[0];
 			}
 			else{
-				rightNode.pointers[0] = leftNode.pointers[leftNode.no_of_keys - 1];
-				rightNode.pointers[1] = leftNode.pointers[leftNode.no_of_keys--];
+				//				rightNode.keys[0] = parent.keys[separatorIndex];
+				rightNode.pointers[0] = leftNode.pointers[leftNode.no_of_keys];
+				parent.keys[separatorIndex] = leftNode.keys[--leftNode.no_of_keys];
 			}
-			
-			//change the separator
-			parent.keys[separatorIndex] = rightNode.keys[0];
+
 		}
-		
-//		public Node merge(Node rightNode) {
-//			Node parent = (Node) pointers[pointers.length - 1];
-//			int separatorIndex = (int) keys[keys.length - 1];
-//			
-//			Node leftNode = this;
-//			
-//			//migrate the values to the leftNode
-//			for (int i = 0; i < rightNode.no_of_keys; i++) {
-//				leftNode.keys[leftNode.no_of_keys + i] = rightNode.keys[i];
-//			}
-//			
-//			
-//		}
-		
-		
+
+		public void merge(Node rightNode, boolean flag) {
+			Node n = flag ? rightNode : this;
+
+			Node parent = (Node) n.pointers[pointers.length - 1];
+			int separatorIndex = (int) n.keys[keys.length - 1];
+
+			Node leftNode = this;
+
+			if (leftNode.isLeaf) {
+				//migrate the values to the leftNode
+				for (int i = 0; i < rightNode.no_of_keys; i++) 
+					leftNode.keys[leftNode.no_of_keys + i] = rightNode.keys[i];
+
+				//migrate the pointers to the leftNode
+				for (int i = 0; i < rightNode.no_of_keys; i++)
+					leftNode.pointers[leftNode.no_of_keys++] = rightNode.pointers[i];
+
+				leftNode.magicPointer = rightNode.magicPointer;
+			}
+			else {
+				leftNode.keys[leftNode.no_of_keys++] = parent.keys[separatorIndex];
+				leftNode.pointers[leftNode.no_of_keys] = rightNode.pointers[0];
+
+				for (int i = 0; i < rightNode.no_of_keys; i++)
+					leftNode.keys[leftNode.no_of_keys + i] = rightNode.keys[i];
+
+				for (int i = 1; i <= rightNode.no_of_keys; i++)
+					leftNode.pointers[++leftNode.no_of_keys] = rightNode.pointers[i];
+			}
+
+
+
+		}
+
+
 		// Methods used for printing
->>>>>>> c1dc373a8403cf25f59bbd6c4309b27f666d4172
 		public String toString() {
 			String res = "[";
 			for (int i = 0; i < keys.length - 1; i++) {
@@ -438,13 +609,12 @@ public class BPlusTree<E> {
 
 				if (i < no_of_keys)
 					if(isLeaf && pointers[i] instanceof ArrayList){
-//						res += ((ArrayList<Page>) pointers[i]).toString();
-						
+
 						res += "{";
 						for (int j = 0; j < ((ArrayList<Page>) pointers[i]).size() - 1; j++) {
 							res += e.toString() + ", ";
 						}
-						
+
 						res += e.toString() + "}";
 					}
 					else
@@ -456,16 +626,11 @@ public class BPlusTree<E> {
 			return res;
 		}
 	}
-	
+
 	public static void main(String[] args) {
-<<<<<<< HEAD
 		BPlusTree<Integer> b = new BPlusTree<>(2);
 		b.insert(12, new Page("dummy.class"));
 		b.insert(8, new Page("dummy.class"));
-=======
-		BPlusTree<Integer> b = new BPlusTree<>(3);
-		b.insert(2, new Page("dummy.class"));
->>>>>>> c1dc373a8403cf25f59bbd6c4309b27f666d4172
 		b.insert(1, new Page("dummy.class"));
 		b.insert(23, new Page("dummy.class"));
 		b.insert(5, new Page("dummy.class"));
@@ -473,23 +638,28 @@ public class BPlusTree<E> {
 		b.insert(2, new Page("dummy.class"));
 		b.insert(28, new Page("dummy.class"));
 		b.insert(9, new Page("dummy.class"));
-<<<<<<< HEAD
 		b.insert(18, new Page("dummy.class"));
 		b.insert(24, new Page("dummy.class"));
 		b.insert(40, new Page("dummy.class"));
 		b.insert(48, new Page("dummy.class"));
-		//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
-=======
-		b.insert(3, new Page("dummy.class"));
-		b.insert(6, new Page("dummy.class"));
-		b.insert(-1, new Page("dummy.class"));
-//		b.insert(3, new Page("dummy.class"));
-//				System.out.println(Arrays.toString(((Node)((Node)b.root.pointers[1])).pointers));
-//				System.out.println();
->>>>>>> c1dc373a8403cf25f59bbd6c4309b27f666d4172
+		b.delete(48);
+		b.delete(40);
+		b.delete(2);
+		b.delete(18);
+		b.delete(12);
+		b.delete(9);
+		b.delete(5);
+		b.delete(23);
+		b.delete(24);
+		b.delete(28);
 
+		//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
+		//		b.insert(3, new Page("dummy.class"));
+		//		System.out.println(Arrays.toString(((Node)((Node)b.root.pointers[1])).pointers));
+		//		System.out.println();
+
+		//		System.out.println(((Node)b.root.pointers[1]).no_of_keys);
 		System.out.println(b);
-		
-		System.out.println(b.find(10));
+
 	}
 }
