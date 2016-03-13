@@ -357,11 +357,11 @@ public class DBApp {
 		BPlusTree result = null;
 
 		try {
-			boolean exists = new File("data/tables.class").exists();
+			boolean exists = new File(indexName).exists();
 
 			if(exists){
 				ObjectInputStream objectInputStream;
-				objectInputStream = new ObjectInputStream(new FileInputStream(new File("data/tables.class")));
+				objectInputStream = new ObjectInputStream(new FileInputStream(new File(indexName)));
 				result = (BPlusTree) objectInputStream.readObject();
 				objectInputStream.close();
 			}
