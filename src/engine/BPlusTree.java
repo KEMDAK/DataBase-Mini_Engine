@@ -629,27 +629,6 @@ public class BPlusTree<E> implements Serializable{
 		}
 	}
 	
-	private static class Record implements Serializable{
-		String pageName;
-		int index;
-		
-		public Record(String pageName, int index) {
-			this.pageName = pageName;
-			this.index = index;
-		}
-		
-		@Override
-		public boolean equals(Object o) {
-			Record r = (Record) o;
-			return (pageName.equals(r.pageName) && index == r.index);
-		}
-		
-		@Override
-		public String toString() {
-			return "(" + pageName + ", " + index + ")";
-		}
-	}
-
 	public static void main(String[] args) {
 		BPlusTree<Integer> b = new BPlusTree<>(2);
 		b.insert(12, "dummy.class", 0);

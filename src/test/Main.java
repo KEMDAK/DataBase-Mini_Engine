@@ -18,10 +18,10 @@ public class Main {
 		// initialize it
 		myDB.init();
 		
-//		long dbinit = System.currentTimeMillis();
-//		System.out.println("db started in " + (dbinit - start) + " ms.");
-//		// creating table "Faculty"
-//
+		long dbinit = System.currentTimeMillis();
+		System.out.println("db started in " + (dbinit - start) + " ms.");
+		// creating table "Faculty"
+
 //		Hashtable<String, String> fTblColNameType = new Hashtable<String, String>();
 //		fTblColNameType.put("ID", "Integer");
 //		fTblColNameType.put("Name", "String");
@@ -92,6 +92,7 @@ public class Main {
 //		ftblColNameValue1.put("ID", Integer.valueOf( "1" ) );
 //		ftblColNameValue1.put("Name", "Media Engineering and Technology");
 //		myDB.insertIntoTable("Faculty", ftblColNameValue1);
+		
 //
 //		Hashtable<String,Object> ftblColNameValue2 = new Hashtable<String,Object>();
 //		ftblColNameValue2.put("ID", Integer.valueOf( "2" ) );
@@ -105,6 +106,7 @@ public class Main {
 //			ftblColNameValueI.put("Name", "f"+(i+2));
 //			myDB.insertIntoTable("Faculty", ftblColNameValueI);
 //		}
+//		System.out.println(myDB.loadIndex("indices/Faculty::ID.class"));
 //
 //		// insert in table "Major"
 //
@@ -268,9 +270,9 @@ public class Main {
 //			System.out.println(myIt.next());
 //		}
 		
-		Hashtable<String,Object> stblColNameValue = new Hashtable<String,Object>();
-		stblColNameValue.put("Age", Integer.valueOf( "23" ) );
-		myDB.updateTable("Student","550",stblColNameValue);
+//		Hashtable<String,Object> stblColNameValue = new Hashtable<String,Object>();
+//		stblColNameValue.put("Age", Integer.valueOf( "23" ) );
+//		myDB.updateTable("Student","550",stblColNameValue);
 	}
 
 }
