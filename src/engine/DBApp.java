@@ -90,7 +90,6 @@ public class DBApp {
 				//not considering compounded primary key
 
 				if(entry.getKey().equals(strKeyColName)){
-					createIndex(strTableName, strKeyColName);
 					sb.append(true + "");
 				}
 				else{
@@ -121,6 +120,7 @@ public class DBApp {
 
 			saveTables();
 
+			createIndex(strTableName, strKeyColName);
 			out.close();
 		} catch (FileNotFoundException e) {
 			System.err.println("metadata.csv not found...!");
