@@ -36,7 +36,7 @@ public class BPlusTree<E> {
 		rules[ROOT][MIN_KEYS] = 1;
 	}
 
-	public ArrayList<Page> find(E target) {
+	public ArrayList<Record> find(E target) {
 		Queue<Node> q = new LinkedList<Node>();
 		q.add(root);
 
@@ -47,10 +47,10 @@ public class BPlusTree<E> {
 			if (node.isLeaf) {
 				Object key = node.search(target);
 				if(key instanceof ArrayList)
-					return (ArrayList<Page>) key;
+					return (ArrayList<Record>) key;
 				else{
-					ArrayList<Page> res = new ArrayList<>();
-					res.add((Page) key);
+					ArrayList<Record> res = new ArrayList<>();
+					res.add((Record) key);
 					return res;
 				}
 			}
@@ -61,8 +61,9 @@ public class BPlusTree<E> {
 		return null;
 	}
 
-	public void insert(E value, Page page) {
-		Node newNode = insertHelper(root, value, page);
+	public void insert(E value, String page, int index) {
+		Record record = new Record(page, index);
+		Node newNode = insertHelper(root, value, record);
 
 		if (newNode == null)
 			return;
@@ -77,9 +78,9 @@ public class BPlusTree<E> {
 		root = newRoot;
 	}
 
-	public Node insertHelper(Node current, E value, Page page) {
+	public Node insertHelper(Node current, E value, Record record) {
 		if (current.isLeaf) {
-			boolean inserted = current.insertInLeaf(value, page);
+			boolean inserted = current.insertInLeaf(value, record);
 
 			if (inserted)
 				return null;
@@ -91,7 +92,7 @@ public class BPlusTree<E> {
 			return newNodeOfMe;
 		}
 		else {
-			Node newNode = insertHelper((Node) current.search(value), value, page);
+			Node newNode = insertHelper((Node) current.search(value), value, record);
 
 			if (newNode == null)
 				return null;
@@ -121,7 +122,7 @@ public class BPlusTree<E> {
 
 		// new root
 		if (root.no_of_keys < rules[ROOT][MIN_KEYS]) 
-			root = root.pointers[0] instanceof Page || root.pointers[0] instanceof ArrayList ? null : (Node) root.pointers[0];
+			root = root.pointers[0] instanceof Record || root.pointers[0] instanceof ArrayList ? null : (Node) root.pointers[0];
 	}
 
 	public boolean deleteHelper(Node node, E value) {
@@ -367,7 +368,7 @@ public class BPlusTree<E> {
 			return null;
 		}
 
-		public boolean insertInLeaf(E value, Page page) {
+		public boolean insertInLeaf(E value, Record record) {
 			boolean valid = true;
 
 			if (no_of_keys == keys.length - 1)
@@ -382,12 +383,12 @@ public class BPlusTree<E> {
 				}
 				else if(keys[i - 1].compareTo(value) == 0) {
 					if(!(pointers[i - 1] instanceof ArrayList)){
-						Page temp = (Page) pointers[i - 1];
+						Record temp = (Record) pointers[i - 1];
 						pointers[i - 1] = (Object) (new ArrayList<>());
-						((ArrayList<Page>) pointers[i - 1]).add(temp);
+						((ArrayList<Record>) pointers[i - 1]).add(temp);
 					}
 
-					((ArrayList<Page>) pointers[i - 1]).add(page);
+					((ArrayList<Record>) pointers[i - 1]).add(record);
 
 					for (int j = i; j < no_of_keys; j++) {
 						keys[j] = keys[j + 1];
@@ -398,7 +399,7 @@ public class BPlusTree<E> {
 				}
 				else {
 					keys[i] = (Comparable<E>) value;
-					pointers[i] = page;
+					pointers[i] = record;
 					break;
 				}
 			}
@@ -406,7 +407,7 @@ public class BPlusTree<E> {
 			no_of_keys++;
 			if(i == 0){
 				keys[0] = (Comparable<E>) value;
-				pointers[0] = (Object) page;
+				pointers[0] = (Object) record;
 			}
 
 			return valid;
@@ -611,7 +612,7 @@ public class BPlusTree<E> {
 					if(isLeaf && pointers[i] instanceof ArrayList){
 
 						res += "{";
-						for (int j = 0; j < ((ArrayList<Page>) pointers[i]).size() - 1; j++) {
+						for (int j = 0; j < ((ArrayList<Record>) pointers[i]).size() - 1; j++) {
 							res += e.toString() + ", ";
 						}
 
@@ -626,22 +627,49 @@ public class BPlusTree<E> {
 			return res;
 		}
 	}
+	
+	private static class Record{
+		String pageName;
+		int index;
+		
+		public Record(String pageName, int index) {
+			this.pageName = pageName;
+			this.index = index;
+		}
+		
+		@Override
+		public boolean equals(Object o) {
+			Record r = (Record) o;
+			return (pageName.equals(r.pageName) && index == r.index);
+		}
+		
+		@Override
+		public String toString() {
+			return "(" + pageName + ", " + index + ")";
+		}
+	}
 
 	public static void main(String[] args) {
 		BPlusTree<Integer> b = new BPlusTree<>(2);
-		b.insert(12, new Page("dummy.class"));
-		b.insert(8, new Page("dummy.class"));
-		b.insert(1, new Page("dummy.class"));
-		b.insert(23, new Page("dummy.class"));
-		b.insert(5, new Page("dummy.class"));
-		b.insert(7, new Page("dummy.class"));
-		b.insert(2, new Page("dummy.class"));
-		b.insert(28, new Page("dummy.class"));
-		b.insert(9, new Page("dummy.class"));
-		b.insert(18, new Page("dummy.class"));
-		b.insert(24, new Page("dummy.class"));
-		b.insert(40, new Page("dummy.class"));
-		b.insert(48, new Page("dummy.class"));
+		b.insert(12, "dummy.class", 0);
+		b.insert(8, "dummy.class", 0);
+		b.insert(1, "dummy.class", 0);
+		b.insert(23, "dummy.class", 0);
+		b.insert(5, "dummy.class", 0);
+		b.insert(23, "dummy.class", 0);
+		b.insert(5, "dummy.class", 0);
+		b.insert(23, "dummy.class", 0);
+		b.insert(5, "dummy.class", 0);
+		b.insert(23, "dummy.class", 0);
+		b.insert(5, "dummy.class", 0);
+		b.insert(7, "dummy.class", 0);
+		b.insert(2, "dummy.class", 0);
+		b.insert(28, "dummy.class", 0);
+		b.insert(9, "dummy.class", 0);
+		b.insert(18, "dummy.class", 0);
+		b.insert(24, "dummy.class", 0);
+		b.insert(40, "dummy.class", 0);
+		b.insert(48, "dummy.class", 0);
 		b.delete(48);
 		b.delete(40);
 		b.delete(2);
@@ -649,17 +677,19 @@ public class BPlusTree<E> {
 		b.delete(12);
 		b.delete(9);
 		b.delete(5);
-		b.delete(23);
+//		b.delete(23);
 		b.delete(24);
 		b.delete(28);
 
 		//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
-		//		b.insert(3, new Page("dummy.class"));
+		//		b.insert(3, "dummy.class", 0);
 		//		System.out.println(Arrays.toString(((Node)((Node)b.root.pointers[1])).pointers));
 		//		System.out.println();
 
 		//		System.out.println(((Node)b.root.pointers[1]).no_of_keys);
-		System.out.println(b);
+//		System.out.println(b);
+		
+		System.out.println(b.find(7));
 
 	}
 }
