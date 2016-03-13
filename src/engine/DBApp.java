@@ -151,7 +151,7 @@ public class DBApp {
 			Table table = tables.get(strTableName);
 
 			BPlusTree tree = new BPlusTree(BPlusTreeN);
-			
+
 			int totalNumberOfPages = (table.getNextFree() / DBApp.getMaximumRowsCountinPage()) + 1;
 			if(table.getNextFree() % DBApp.getMaximumRowsCountinPage() == 0)
 				totalNumberOfPages--;
@@ -163,15 +163,15 @@ public class DBApp {
 					Row row = page.getRows()[j];
 					if(row == null)
 						continue;
-					
+
 					tree.insert(row.getValues().get(strColName), (strTableName + "_" + i + ".class"), j);
-					
+
 				}
 			}
-			
+
 			saveIndex(tree, ("indices/" + strTableName + "::" + strColName + ".class"));
-			
-			
+
+
 		} catch (TableNotFoundException e) {
 			System.err.println(e.getMessage());
 			e.printStackTrace();
@@ -203,21 +203,21 @@ public class DBApp {
 			int index = table.getNextFree() % DBApp.getMaximumRowsCountinPage();
 
 			table.addRecord(htblColNameValue);
-			
+
 			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
 				String colName = entry.getKey();
 				Object value = entry.getValue();
-				
+
 				BPlusTree tree = loadIndex("indices/" + strTableName + "::" + colName + ".class");
-				
+
 				if(tree == null)
 					continue;
-				
+
 				tree.insert(value, (strTableName + "_" + pageNumber + ".class"), index);				
 
 				saveIndex(tree, ("indices/" + strTableName + "::" + colName + ".class"));
 			}
-			
+
 
 			saveTables();
 		} catch (TableNotFoundException e) {
@@ -264,8 +264,92 @@ public class DBApp {
 			if(!checkTable(strTableName, htblColNameValue))
 				throw new TypeMismatchException();
 
-			Table table = tables.get(strTableName);
-			table.deleteRecord(htblColNameValue, strOperator);
+			ArrayList<Row> result = new ArrayList<>();
+			
+			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+				String colName = entry.getKey();
+				Object value = entry.getValue();
+
+				ArrayList<Row> acc = new ArrayList<>();
+				ArrayList<Row> temp = new ArrayList<>();
+				Table table = tables.get(strTableName);
+				BPlusTree tree = loadIndex("indices/" + (strTableName + "::" + colName + ".class"));
+				if (tree != null) { // we have an index for this column
+					ArrayList<Record> rec = tree.find(value);
+					
+					for (int i = 0; i < rec.size(); i++) {
+						Record cur = rec.get(i);
+						
+						StringTokenizer st = new StringTokenizer(cur.getPageName(), "_");
+						st.nextToken();
+						st = new StringTokenizer(st.nextToken(), ".");
+						
+						int pageNumber = Integer.parseInt(st.nextToken());
+						
+						Page page = table.loadPage(pageNumber);
+						
+						Row row = page.getRows()[cur.getIndex()];
+						
+						temp.add(row);
+					}
+					
+				}
+				else {
+					int totalNumberOfPages = (table.getNextFree() / DBApp.getMaximumRowsCountinPage()) + 1;
+					if(table.getNextFree() % DBApp.getMaximumRowsCountinPage() == 0)
+						totalNumberOfPages--;
+
+					for (int i = 0; i < totalNumberOfPages; i++) {
+						Page page = table.loadPage(i);
+
+						for (Row row : page.getRows()) {
+							if(row == null)
+								continue;
+
+							if (Table.equalObject(value, row.getValues().get(colName))) 
+								temp.add(row);
+						}
+					}
+				}
+				
+				if (result.isEmpty()) 
+					acc = temp;
+				else {
+					if (strOperator.equals("AND")) {
+						for (int i = 0; i < temp.size(); i++) {
+							Row cur = temp.get(i);
+							boolean valid = false;
+							for (int j = 0; j < result.size() && !valid; j++) {
+								Row r = result.get(j);
+								if (cur.equals(r))
+									valid = true;
+							}
+
+							if (valid)
+								acc.add(cur);
+						}
+					}
+					else {
+						for (int i = 0; i < temp.size(); i++) {
+							Row cur = temp.get(i);
+							boolean valid = true;
+							for (int j = 0; j < result.size() && valid; j++) {
+								Row r = result.get(j);
+								if (cur.equals(r))
+									valid = false;
+							}
+
+							if (valid)
+								acc.add(cur);
+						}
+					}
+				}
+				
+				result = acc;
+			}
+			
+			
+			//			table.deleteRecord(htblColNameValue, strOperator);
 		} catch (TableNotFoundException e) {
 			e.printStackTrace();
 		} catch(TypeMismatchException e) {
@@ -346,7 +430,6 @@ public class DBApp {
 			System.err.println("metadata.csv not found...!");
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -367,16 +450,13 @@ public class DBApp {
 			}
 
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return result;
 	}
 
@@ -389,7 +469,7 @@ public class DBApp {
 			e.printStackTrace();
 		}    	
 	}
-	
+
 	public void saveIndex(BPlusTree tree, String name) {
 		try {
 			ObjectOutputStream objectInputStream = new ObjectOutputStream(new FileOutputStream(new File(name)));

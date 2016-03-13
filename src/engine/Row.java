@@ -26,7 +26,7 @@ public class Row implements Serializable {
 			sb.append("\"" + entry.getKey() + "\" : \"" + toStringObject(entry.getValue()) + "\"");
 			i++;
 		}
-		
+
 		sb.append("}");
 		return sb.toString();
 	}
@@ -42,7 +42,21 @@ public class Row implements Serializable {
 			return ((Boolean) o).toString();
 		if(o instanceof Date)
 			return ((Date) o).toString();
-		
+
 		return "Presentation error";
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		Row other = (Row) o;
+		for (Entry<String, Object> entry : values.entrySet()) {
+			String colName = entry.getKey();
+			Object colValue = entry.getValue();
+			
+			if (other.getValues().get(colName) == null || !(colValue.equals(other.getValues().get(colName))))
+				return false;
+		}
+		
+		return true;
 	}
 }

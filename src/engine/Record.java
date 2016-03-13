@@ -3,8 +3,8 @@ package engine;
 import java.io.Serializable;
 
 public class Record implements Serializable{
-	String pageName;
-	int index;
+	private String pageName;
+	private int index;
 	
 	public Record(String pageName, int index) {
 		this.pageName = pageName;
@@ -20,6 +20,14 @@ public class Record implements Serializable{
 	@Override
 	public String toString() {
 		return "(" + pageName + ", " + index + ")";
+	}
+	
+	public int getIndex() {
+		return index;
+	}
+	
+	public String getPageName() {
+		return pageName;
 	}
 }
 
