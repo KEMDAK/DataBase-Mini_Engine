@@ -245,7 +245,24 @@ public class DBApp {
 
 			Table table = tables.get(strTableName);
 
-			table.updateRecord(strKey, htblColNameValue);
+			BPlusTree tree = loadIndex("indices/" + strTableName + "::" + table.getPrimarykey() + ".class");
+
+			if(tree == null)
+				table.updateRecord(strKey, htblColNameValue);
+			else{
+				ArrayList<Record> records = tree.find(strKey);
+				tree.delete(strKey);
+
+				for (Record record : records) {
+					if(record == null)
+						continue;
+
+					table.updateRecordImmediate(record.getPageName(), record.getIndex(), strKey, htblColNameValue);
+					tree.insert(htblColNameValue.get(table.getPrimarykey()), record.getPageName(), record.getIndex());
+				}
+
+				saveIndex(tree, ("indices/" + strTableName + "::" + table.getPrimarykey() + ".class"));
+			}
 
 		} catch (TableNotFoundException e) {
 			System.err.println(e.getMessage());
@@ -266,13 +283,13 @@ public class DBApp {
 
 			ArrayList<Row> result = new ArrayList<>();
 			
+			Table table = tables.get(strTableName);
 			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
 				String colName = entry.getKey();
 				Object value = entry.getValue();
 
 				ArrayList<Row> acc = new ArrayList<>();
 				ArrayList<Row> temp = new ArrayList<>();
-				Table table = tables.get(strTableName);
 				BPlusTree tree = loadIndex("indices/" + (strTableName + "::" + colName + ".class"));
 				if (tree != null) { // we have an index for this column
 					ArrayList<Record> rec = tree.find(value);
@@ -348,8 +365,27 @@ public class DBApp {
 				result = acc;
 			}
 			
+			for (Row row : result) {
+				
+				for (Entry<String, Object> entry : row.getValues().entrySet()) {
+					String colName = entry.getKey();
+					Object colValue = entry.getValue();
+					
+					BPlusTree tree = loadIndex("indices/" + (strTableName + "::" + colName + ".class"));
+					if (tree != null) { // we have an index for this column
+						tree.delete(colValue);
+						
+						for (Object o : tree.getLastDeleted()) {
+							Record record = (Record) o;
+							
+							table.deleteRecord(record);
+						}
+					}
+					
+					saveIndex(tree, "indices/" + (strTableName + "::" + colName + ".class"));
+				}
+			}
 			
-			//			table.deleteRecord(htblColNameValue, strOperator);
 		} catch (TableNotFoundException e) {
 			e.printStackTrace();
 		} catch(TypeMismatchException e) {

@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
 public class Table implements Comparable<Table>, Serializable {
@@ -103,35 +104,38 @@ public class Table implements Comparable<Table>, Serializable {
 		}
 	}
 
-	public void deleteRecord(Hashtable<String,Object> values, String operator) {
-		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;
-		if(nextFree % DBApp.getMaximumRowsCountinPage() == 0)
-			totalNumberOfPages--;
 
-		for (int i = 0; i < totalNumberOfPages; i++) {
-			Page page = loadPage(i);
-			boolean modified = false;
+	public void updateRecordImmediate(String pageName, int index, Object strKey, Hashtable<String,Object> htblColNameValue){
+		StringTokenizer s = new StringTokenizer(pageName, "_");
+		s.nextToken();
+		s = new StringTokenizer(s.nextToken(), ".");
+		int pageNumber = Integer.parseInt(s.nextToken());
 
-			for (int j = 0; j < page.getRows().length; j++) {
-				Row row = page.getRows()[j];
-				if (row == null)
-					continue;
+		Page page = loadPage(pageNumber);
 
-				ArrayList<Boolean> truthValues = new ArrayList<>();
+		Row row = page.getRows()[index];
 
-				for (Entry<String, Object> entry : values.entrySet()) {
-					truthValues.add(equalObject(entry.getValue(), row.getValues().get(entry.getKey())));
-				}
-
-				if(evaluate(truthValues, operator)) {
-					page.getRows()[j] = null;
-					modified = true;
-				}
+		if(equalObject(strKey, row.getValues().get(primarykey))){
+			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+				row.getValues().put(entry.getKey(), entry.getValue());
 			}
 
-			if (modified)
-				updatePage(page);
+			row.getValues().put("TouchDate", new Date());
+
+			updatePage(page);
 		}
+	}
+
+	public void deleteRecord(Record record) {	
+		StringTokenizer st = new StringTokenizer(record.getPageName(), "_");
+		st.nextToken();
+		st = new StringTokenizer(st.nextToken(), ".");
+		int pageNumber = Integer.parseInt(st.nextToken());
+		
+		Page page = loadPage(pageNumber);
+		page.getRows()[record.getIndex()] = null;
+		
+		updatePage(page);
 	}
 
 
@@ -230,7 +234,7 @@ public class Table implements Comparable<Table>, Serializable {
 	public String getPrimarykey() {
 		return primarykey;
 	}
-	
+
 	public int getNextFree() {
 		return nextFree;
 	}

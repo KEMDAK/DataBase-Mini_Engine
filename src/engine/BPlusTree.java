@@ -2,7 +2,6 @@ package engine;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -17,6 +16,7 @@ public class BPlusTree<E> implements Serializable{
 	private final int MAX_KEYS = 1;
 	private final int MIN_PTRS = 2;
 	private final int MIN_KEYS = 3;
+	private ArrayList<Record> lastDeleted;
 
 	public BPlusTree(int n) {
 		this.n = n;
@@ -123,16 +123,39 @@ public class BPlusTree<E> implements Serializable{
 
 		// new root
 		if (root.no_of_keys < rules[ROOT][MIN_KEYS]) 
-			root = root.pointers[0] instanceof Record || root.pointers[0] instanceof ArrayList ? null : (Node) root.pointers[0];
+			root = root.pointers[0] instanceof Record || root.pointers[0] instanceof ArrayList ? new Node<>(n, true) : (Node) root.pointers[0];
 	}
 
 	public boolean deleteHelper(Node node, E value) {
 		if (node.isLeaf) {
-			int index = Arrays.binarySearch(node.keys, value);
+			int low = 0;
+			int high = node.no_of_keys - 1;
+			
+			int index = -1;
+			
+			while(low <= high){
+				int mid = low + (high - low) / 2;
 
+				if(node.keys[mid].compareTo(value) == 0) {
+					index = mid;
+					break;
+				}
+				else if(node.keys[mid].compareTo(value) < 0)
+					low = mid + 1;
+				else
+					high = mid - 1;
+			}
+			
 			if (index == -1)
 				return true;
-
+			
+			if (node.keys[index] instanceof ArrayList)
+				lastDeleted = (ArrayList<Record>) node.pointers[index];
+			else {
+				ArrayList<Record> a = new ArrayList<>();
+				a.add((Record)node.pointers[index]);
+				lastDeleted = a;
+			}
 			node.deleteFromNode(index);
 
 			if (node == root)
@@ -312,6 +335,10 @@ public class BPlusTree<E> implements Serializable{
 		return res;
 	}
 
+	public ArrayList<Record> getLastDeleted() {
+		return lastDeleted;
+	}
+	
 	private static class Node<E>  implements Serializable{
 		private Comparable<E>[] keys;
 		private Object[] pointers;
@@ -483,7 +510,7 @@ public class BPlusTree<E> implements Serializable{
 
 		//Methods used for deletion
 		public void deleteFromNode(int index) {
-
+			
 			for (int i = index + 1; i < no_of_keys; i++) 
 				keys[i - 1] = keys[i];
 
@@ -631,35 +658,36 @@ public class BPlusTree<E> implements Serializable{
 	
 	public static void main(String[] args) {
 		BPlusTree<Integer> b = new BPlusTree<>(2);
-		b.insert(12, "dummy.class", 0);
-		b.insert(8, "dummy.class", 0);
-		b.insert(1, "dummy.class", 0);
-		b.insert(23, "dummy.class", 0);
-		b.insert(5, "dummy.class", 0);
-		b.insert(23, "dummy.class", 0);
-		b.insert(5, "dummy.class", 0);
-		b.insert(23, "dummy.class", 0);
-		b.insert(5, "dummy.class", 0);
-		b.insert(23, "dummy.class", 0);
-		b.insert(5, "dummy.class", 0);
-		b.insert(7, "dummy.class", 0);
-		b.insert(2, "dummy.class", 0);
-		b.insert(28, "dummy.class", 0);
-		b.insert(9, "dummy.class", 0);
-		b.insert(18, "dummy.class", 0);
-		b.insert(24, "dummy.class", 0);
-		b.insert(40, "dummy.class", 0);
-		b.insert(48, "dummy.class", 0);
-		b.delete(48);
-		b.delete(40);
-		b.delete(2);
-		b.delete(18);
-		b.delete(12);
-		b.delete(9);
-		b.delete(5);
-//		b.delete(23);
-		b.delete(24);
-		b.delete(28);
+		System.out.println(b.root);
+//		b.insert(12, "dummy.class", 0);
+//		b.insert(8, "dummy.class", 0);
+//		b.insert(1, "dummy.class", 0);
+//		b.insert(23, "dummy.class", 0);
+//		b.insert(5, "dummy.class", 0);
+//		b.insert(23, "dummy.class", 0);
+//		b.insert(5, "dummy.class", 0);
+//		b.insert(23, "dummy.class", 0);
+//		b.insert(5, "dummy.class", 0);
+//		b.insert(23, "dummy.class", 0);
+//		b.insert(5, "dummy.class", 0);
+//		b.insert(7, "dummy.class", 0);
+//		b.insert(2, "dummy.class", 0);
+//		b.insert(28, "dummy.class", 0);
+//		b.insert(9, "dummy.class", 0);
+//		b.insert(18, "dummy.class", 0);
+//		b.insert(24, "dummy.class", 0);
+//		b.insert(40, "dummy.class", 0);
+//		b.insert(48, "dummy.class", 0);
+//		b.delete(48);
+//		b.delete(40);
+//		b.delete(2);
+//		b.delete(18);
+//		b.delete(12);
+//		b.delete(9);
+//		b.delete(5);
+////		b.delete(23);
+//		b.delete(24);
+//		b.delete(28);
 
 		//		System.out.println(((Node)((Node)b.root.pointers[1]).pointers[1]));
 		//		b.insert(3, "dummy.class", 0);
