@@ -182,10 +182,11 @@ public class DBApp {
 				if(tree == null)
 					continue;
 				
-				tree.insert(value, (strTableName + "_" + pageNumber + ".class"), index);
-				
-				saveIndex(tree, (strTableName + "_" + pageNumber + ".class"));
+				tree.insert(value, (strTableName + "_" + pageNumber + ".class"), index);				
+
+				saveIndex(tree, ("indices/" + strTableName + "::" + colName + ".class"));
 			}
+			
 
 			saveTables();
 		} catch (TableNotFoundException e) {
