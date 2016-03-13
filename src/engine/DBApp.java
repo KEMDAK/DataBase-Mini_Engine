@@ -1,4 +1,5 @@
 package engine;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -168,6 +169,8 @@ public class DBApp {
 				}
 			}
 			
+			saveIndex(tree, ("indices/" + strTableName + "::" + strColName + ".class"));
+			
 			
 		} catch (TableNotFoundException e) {
 			System.err.println(e.getMessage());
@@ -195,7 +198,26 @@ public class DBApp {
 			// NOT considering Integrity constraints 
 
 			Table table = tables.get(strTableName);
+
+			int pageNumber = table.getNextFree() / DBApp.getMaximumRowsCountinPage();
+			int index = table.getNextFree() % DBApp.getMaximumRowsCountinPage();
+
 			table.addRecord(htblColNameValue);
+			
+			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+				String colName = entry.getKey();
+				Object value = entry.getValue();
+				
+				BPlusTree tree = loadIndex("indices/" + strTableName + "::" + colName + ".class");
+				
+				if(tree == null)
+					continue;
+				
+				tree.insert(value, (strTableName + "_" + pageNumber + ".class"), index);				
+
+				saveIndex(tree, ("indices/" + strTableName + "::" + colName + ".class"));
+			}
+			
 
 			saveTables();
 		} catch (TableNotFoundException e) {
@@ -331,10 +353,47 @@ public class DBApp {
 		return false;
 	}
 
+	public BPlusTree loadIndex(String indexName) {
+		BPlusTree result = null;
+
+		try {
+			boolean exists = new File("data/tables.class").exists();
+
+			if(exists){
+				ObjectInputStream objectInputStream;
+				objectInputStream = new ObjectInputStream(new FileInputStream(new File("data/tables.class")));
+				result = (BPlusTree) objectInputStream.readObject();
+				objectInputStream.close();
+			}
+
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return result;
+	}
+
 	public void saveTables() {
 		try {
 			ObjectOutputStream objectInputStream = new ObjectOutputStream(new FileOutputStream(new File("data/tables.class")));
 			objectInputStream.writeObject(tables);
+			objectInputStream.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}    	
+	}
+	
+	public void saveIndex(BPlusTree tree, String name) {
+		try {
+			ObjectOutputStream objectInputStream = new ObjectOutputStream(new FileOutputStream(new File(name)));
+			objectInputStream.writeObject(tree);
 			objectInputStream.close();
 		} catch (IOException e) {
 			e.printStackTrace();

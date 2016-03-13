@@ -1,11 +1,12 @@
 package engine;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class BPlusTree<E> {
+public class BPlusTree<E> implements Serializable{
 	private int n;
 	private Node root;
 	private int[][] rules;
@@ -311,7 +312,7 @@ public class BPlusTree<E> {
 		return res;
 	}
 
-	private static class Node<E> {
+	private static class Node<E>  implements Serializable{
 		private Comparable<E>[] keys;
 		private Object[] pointers;
 		private Node magicPointer;
@@ -628,7 +629,7 @@ public class BPlusTree<E> {
 		}
 	}
 	
-	private static class Record{
+	private static class Record implements Serializable{
 		String pageName;
 		int index;
 		
