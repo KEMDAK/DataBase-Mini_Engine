@@ -79,7 +79,7 @@ public class Table implements Comparable<Table>, Serializable {
 
 		for (int i = 0; i < totalNumberOfPages; i++) {
 			Page page = loadPage(i);
-			
+
 			boolean found = false;
 
 			for (Row row : page.getRows()) {
@@ -90,7 +90,7 @@ public class Table implements Comparable<Table>, Serializable {
 					for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
 						row.getValues().put(entry.getKey(), entry.getValue());
 					}
-					
+
 					row.getValues().put("TouchDate", new Date());
 
 					found = true;
@@ -102,7 +102,7 @@ public class Table implements Comparable<Table>, Serializable {
 			}
 		}
 	}
-	
+
 	public void deleteRecord(Hashtable<String,Object> values, String operator) {
 		int totalNumberOfPages = (nextFree / DBApp.getMaximumRowsCountinPage()) + 1;
 		if(nextFree % DBApp.getMaximumRowsCountinPage() == 0)
@@ -111,7 +111,7 @@ public class Table implements Comparable<Table>, Serializable {
 		for (int i = 0; i < totalNumberOfPages; i++) {
 			Page page = loadPage(i);
 			boolean modified = false;
-			
+
 			for (int j = 0; j < page.getRows().length; j++) {
 				Row row = page.getRows()[j];
 				if (row == null)
@@ -151,15 +151,17 @@ public class Table implements Comparable<Table>, Serializable {
 
 				ArrayList<Boolean> truthValues = new ArrayList<>();
 
-				for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
-					truthValues.add(equalObject(entry.getValue(), row.getValues().get(entry.getKey())));
+				if (htblColNameValue != null) {
+					for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+						truthValues.add(equalObject(entry.getValue(), row.getValues().get(entry.getKey())));
+					}
 				}
 
 				if(evaluate(truthValues, strOperator))
 					result.addRow(row);
 			}
 		}
-		
+
 		return result;
 	}
 
@@ -174,6 +176,8 @@ public class Table implements Comparable<Table>, Serializable {
 	}
 
 	public static boolean evaluate(ArrayList<Boolean> truthValues, String operator){
+		if (truthValues.isEmpty()) 
+			return true;
 		if(operator.equals("OR")){
 			boolean res = false;
 
@@ -225,5 +229,9 @@ public class Table implements Comparable<Table>, Serializable {
 
 	public String getPrimarykey() {
 		return primarykey;
+	}
+	
+	public int getNextFree() {
+		return nextFree;
 	}
 }

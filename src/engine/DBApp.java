@@ -143,7 +143,36 @@ public class DBApp {
 	}
 
 	public void createIndex(String strTableName, String strColName)  throws DBAppException{
+		try {
+			if (!tables.containsKey(strTableName))
+				throw new TableNotFoundException(strTableName);
 
+			Table table = tables.get(strTableName);
+
+			BPlusTree tree = new BPlusTree(BPlusTreeN);
+			
+			int totalNumberOfPages = (table.getNextFree() / DBApp.getMaximumRowsCountinPage()) + 1;
+			if(table.getNextFree() % DBApp.getMaximumRowsCountinPage() == 0)
+				totalNumberOfPages--;
+
+			for (int i = 0; i < totalNumberOfPages; i++) {
+				Page page = table.loadPage(i);
+
+				for (int j = 0; j < page.getRows().length; j++) {
+					Row row = page.getRows()[j];
+					if(row == null)
+						continue;
+					
+					tree.insert(row.getValues().get(strColName), (strTableName + "_" + i + ".class"), j);
+					
+				}
+			}
+			
+			
+		} catch (TableNotFoundException e) {
+			System.err.println(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	public void insertIntoTable(String strTableName, Hashtable<String,Object> htblColNameValue) throws DBAppException, DBEngineException {
@@ -191,11 +220,11 @@ public class DBApp {
 				throw new TableNotFoundException(strTableName);
 			if(!checkTable(strTableName, htblColNameValue))
 				throw new TypeMismatchException();
-			
+
 			Table table = tables.get(strTableName);
 
 			table.updateRecord(strKey, htblColNameValue);
-			
+
 		} catch (TableNotFoundException e) {
 			System.err.println(e.getMessage());
 			e.printStackTrace();
@@ -244,6 +273,8 @@ public class DBApp {
 
 
 	public boolean checkTable(String strTableName, Hashtable<String,Object> htblColNameValue){
+		if (htblColNameValue == null)
+			return true;
 		try {
 			BufferedReader in = new BufferedReader(new FileReader("data/metadata.csv"));
 
