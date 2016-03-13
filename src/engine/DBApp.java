@@ -297,6 +297,7 @@ public class DBApp {
 					for (int i = 0; i < rec.size(); i++) {
 						Record cur = rec.get(i);
 						
+						if (cur == null) continue;
 						StringTokenizer st = new StringTokenizer(cur.getPageName(), "_");
 						st.nextToken();
 						st = new StringTokenizer(st.nextToken(), ".");
@@ -347,6 +348,7 @@ public class DBApp {
 						}
 					}
 					else {
+						acc = result;
 						for (int i = 0; i < temp.size(); i++) {
 							Row cur = temp.get(i);
 							boolean valid = true;
@@ -364,7 +366,7 @@ public class DBApp {
 				
 				result = acc;
 			}
-			
+						
 			for (Row row : result) {
 				
 				for (Entry<String, Object> entry : row.getValues().entrySet()) {

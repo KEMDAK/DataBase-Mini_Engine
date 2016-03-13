@@ -23,13 +23,13 @@ public class Main {
 		System.out.println("db started in " + (dbinit - start) + " ms.");
 		// creating table "Faculty"
 
-//				Hashtable<String, String> fTblColNameType = new Hashtable<String, String>();
-//				fTblColNameType.put("ID", "Integer");
-//				fTblColNameType.put("Name", "String");
-//		
-//				Hashtable<String, String> fTblColNameRefs = new Hashtable<String, String>();
-//		
-//				myDB.createTable("Faculty", fTblColNameType, fTblColNameRefs, "ID");
+//						Hashtable<String, String> fTblColNameType = new Hashtable<String, String>();
+//						fTblColNameType.put("ID", "Integer");
+//						fTblColNameType.put("Name", "String");
+//				
+//						Hashtable<String, String> fTblColNameRefs = new Hashtable<String, String>();
+//				
+//						myDB.createTable("Faculty", fTblColNameType, fTblColNameRefs, "ID");
 		//
 		//		// creating table "Major"
 		//
@@ -89,49 +89,75 @@ public class Main {
 		//		
 		//		// insert in table "Faculty"
 		//
-//						Hashtable<String,Object> ftblColNameValue1 = new Hashtable<String,Object>();
-//						ftblColNameValue1.put("ID", Integer.valueOf( "1" ) );
-//						ftblColNameValue1.put("Name", "Media Engineering and Technology");
-//						myDB.insertIntoTable("Faculty", ftblColNameValue1);
+//				Hashtable<String,Object> ftblColNameValue1 = new Hashtable<String,Object>();
+//				ftblColNameValue1.put("ID", Integer.valueOf( "1" ) );
+//				ftblColNameValue1.put("Name", "Media Engineering and Technology");
+//				Hashtable<String,Object> ftblColNameValue2 = new Hashtable<String,Object>();
+//				ftblColNameValue2.put("ID", Integer.valueOf( "2" ) );
+//				ftblColNameValue2.put("Name", "Pharmacy");
+//				Hashtable<String,Object> ftblColNameValue3 = new Hashtable<String,Object>();
+//				ftblColNameValue3.put("ID", Integer.valueOf( "3" ) );
+//				ftblColNameValue3.put("Name", "Production");
+//				Hashtable<String,Object> ftblColNameValue4 = new Hashtable<String,Object>();
+//				ftblColNameValue4.put("ID", Integer.valueOf( "4" ) );
+//				ftblColNameValue4.put("Name", "Civil");
+//				Hashtable<String,Object> ftblColNameValue5 = new Hashtable<String,Object>();
+//				ftblColNameValue5.put("ID", Integer.valueOf( "5" ) );
+//				ftblColNameValue5.put("Name", "Civil");
+//		
+//		
+//				myDB.insertIntoTable("Faculty", ftblColNameValue1);
+//				myDB.insertIntoTable("Faculty", ftblColNameValue2);
+//				myDB.insertIntoTable("Faculty", ftblColNameValue3);
+//				myDB.insertIntoTable("Faculty", ftblColNameValue4);
+//				myDB.insertIntoTable("Faculty", ftblColNameValue5);
 
-//		Hashtable<String,Object> stblColNameValue = new Hashtable<String,Object>();
-//		stblColNameValue.put("Name", "Media Engineering and Technology" );
-//
-//
-//		long startTime = System.currentTimeMillis();
-//		Iterator myIt = myDB.selectFromTable("Faculty", stblColNameValue,"AND");
-//		long endTime   = System.currentTimeMillis();
-//		long totalTime = endTime - startTime;
-//		System.out.println(totalTime);
-//		while(myIt.hasNext()) {
-//			System.out.println(myIt.next());
-//		}
-//		System.out.println("\nTree: \n");
-//		BPlusTree tree = myDB.loadIndex("indices/Faculty::ID.class");
-//		System.out.println(tree);
-//
-//
-//		Hashtable<String, Object> ht = new Hashtable<>();
-//		ht.put("Name", "Media Engineering and Technology");
-//		myDB.deleteFromTable("Faculty", ht, "AND");
-//
-//		System.out.println("After deletion:-");
-//
-//		stblColNameValue = new Hashtable<String,Object>();
-//		stblColNameValue.put("Name", "Media Engineering and Technology");
-//
-//		startTime = System.currentTimeMillis();
-//		myIt = myDB.selectFromTable("Faculty", stblColNameValue,"AND");
-//		endTime   = System.currentTimeMillis();
-//		totalTime = endTime - startTime;
-//		System.out.println(totalTime);
-//		while(myIt.hasNext()) {
-//			System.out.println(myIt.next());
-//		}
-//
-//		System.out.println("\nTree: \n");
-//		tree = myDB.loadIndex("indices/Faculty::ID.class");
-//		System.out.println(tree);
+
+
+
+		Hashtable<String,Object> stblColNameValue = new Hashtable<String,Object>();
+		//		stblColNameValue.put("ID", 4);
+		stblColNameValue.put("Name", "Civil");
+		stblColNameValue.put("ID", 1);
+
+
+
+		long startTime = System.currentTimeMillis();
+		Iterator myIt = myDB.selectFromTable("Faculty", stblColNameValue,"OR");
+		long endTime   = System.currentTimeMillis();
+		long totalTime = endTime - startTime;
+		System.out.println(totalTime);
+		while(myIt.hasNext()) {
+			System.out.println(myIt.next());
+		}
+		System.out.println("\nTree: \n");
+		BPlusTree tree = myDB.loadIndex("indices/Faculty::ID.class");
+		System.out.println(tree);
+
+
+		Hashtable<String, Object> ht = new Hashtable<>();
+		ht.put("Name", "Civil");
+		ht.put("ID", 1);
+		myDB.deleteFromTable("Faculty", ht, "OR");
+
+		System.out.println("After deletion:-");
+
+		stblColNameValue = new Hashtable<String,Object>();
+		stblColNameValue.put("Name", "Civil");
+		stblColNameValue.put("ID", 1);
+
+		startTime = System.currentTimeMillis();
+		myIt = myDB.selectFromTable("Faculty", stblColNameValue,"OR");
+		endTime   = System.currentTimeMillis();
+		totalTime = endTime - startTime;
+		System.out.println(totalTime);
+		while(myIt.hasNext()) {
+			System.out.println(myIt.next());
+		}
+
+		System.out.println("\nTree: \n");
+		tree = myDB.loadIndex("indices/Faculty::ID.class");
+		System.out.println(tree);
 
 		//		
 		//
