@@ -151,7 +151,7 @@ public class DBApp {
 			Table table = tables.get(strTableName);
 
 			BPlusTree tree = new BPlusTree(BPlusTreeN);
-			
+
 			int totalNumberOfPages = (table.getNextFree() / DBApp.getMaximumRowsCountinPage()) + 1;
 			if(table.getNextFree() % DBApp.getMaximumRowsCountinPage() == 0)
 				totalNumberOfPages--;
@@ -163,15 +163,15 @@ public class DBApp {
 					Row row = page.getRows()[j];
 					if(row == null)
 						continue;
-					
+
 					tree.insert(row.getValues().get(strColName), (strTableName + "_" + i + ".class"), j);
-					
+
 				}
 			}
-			
+
 			saveIndex(tree, ("indices/" + strTableName + "::" + strColName + ".class"));
-			
-			
+
+
 		} catch (TableNotFoundException e) {
 			System.err.println(e.getMessage());
 			e.printStackTrace();
@@ -203,21 +203,21 @@ public class DBApp {
 			int index = table.getNextFree() % DBApp.getMaximumRowsCountinPage();
 
 			table.addRecord(htblColNameValue);
-			
+
 			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
 				String colName = entry.getKey();
 				Object value = entry.getValue();
-				
+
 				BPlusTree tree = loadIndex("indices/" + strTableName + "::" + colName + ".class");
-				
+
 				if(tree == null)
 					continue;
-				
+
 				tree.insert(value, (strTableName + "_" + pageNumber + ".class"), index);				
 
 				saveIndex(tree, ("indices/" + strTableName + "::" + colName + ".class"));
 			}
-			
+
 
 			saveTables();
 		} catch (TableNotFoundException e) {
@@ -245,7 +245,24 @@ public class DBApp {
 
 			Table table = tables.get(strTableName);
 
-			table.updateRecord(strKey, htblColNameValue);
+			BPlusTree tree = loadIndex("indices/" + strTableName + "::" + table.getPrimarykey() + ".class");
+
+			if(tree == null)
+				table.updateRecord(strKey, htblColNameValue);
+			else{
+				ArrayList<Record> records = tree.find(strKey);
+				tree.delete(strKey);
+
+				for (Record record : records) {
+					if(record == null)
+						continue;
+
+					table.updateRecordImmediate(record.pageName, record.index, strKey, htblColNameValue);
+					tree.insert(htblColNameValue.get(table.getPrimarykey()), record.pageName, record.index);
+				}
+
+				saveIndex(tree, ("indices/" + strTableName + "::" + table.getPrimarykey() + ".class"));
+			}
 
 		} catch (TableNotFoundException e) {
 			System.err.println(e.getMessage());
@@ -376,7 +393,7 @@ public class DBApp {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return result;
 	}
 
@@ -389,7 +406,7 @@ public class DBApp {
 			e.printStackTrace();
 		}    	
 	}
-	
+
 	public void saveIndex(BPlusTree tree, String name) {
 		try {
 			ObjectOutputStream objectInputStream = new ObjectOutputStream(new FileOutputStream(new File(name)));

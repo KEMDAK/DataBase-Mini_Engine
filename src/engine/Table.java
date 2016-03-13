@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
 public class Table implements Comparable<Table>, Serializable {
@@ -100,6 +101,28 @@ public class Table implements Comparable<Table>, Serializable {
 			if(found){
 				updatePage(page);
 			}
+		}
+	}
+
+
+	public void updateRecordImmediate(String pageName, int index, Object strKey, Hashtable<String,Object> htblColNameValue){
+		StringTokenizer s = new StringTokenizer(pageName, "_");
+		s.nextToken();
+		s = new StringTokenizer(s.nextToken(), ".");
+		int pageNumber = Integer.parseInt(s.nextToken());
+
+		Page page = loadPage(pageNumber);
+
+		Row row = page.getRows()[index];
+
+		if(equalObject(strKey, row.getValues().get(primarykey))){
+			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+				row.getValues().put(entry.getKey(), entry.getValue());
+			}
+
+			row.getValues().put("TouchDate", new Date());
+
+			updatePage(page);
 		}
 	}
 
@@ -230,7 +253,7 @@ public class Table implements Comparable<Table>, Serializable {
 	public String getPrimarykey() {
 		return primarykey;
 	}
-	
+
 	public int getNextFree() {
 		return nextFree;
 	}
