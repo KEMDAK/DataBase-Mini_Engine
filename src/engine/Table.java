@@ -16,6 +16,10 @@ public class Table implements Comparable<Table>, Serializable {
 
 	private String tableName;
 	private int nextFree;
+	public int getNextFree() {
+		return nextFree;
+	}
+
 	private String primarykey;
 
 	public Table(String tableName, String primarykey) {
