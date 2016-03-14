@@ -1,6 +1,7 @@
 package engine;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 
 public class RowIterator implements Iterator<Row>{
@@ -17,6 +18,11 @@ public class RowIterator implements Iterator<Row>{
 	public void addRow(Row row){
 		result.add(row);
 		totalSize++;
+	}
+	
+	public void addAll(Collection<Row> rows) {
+		for (Row row : rows)
+			addRow(row);
 	}
 	
 	public int size(){

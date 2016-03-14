@@ -272,6 +272,97 @@ public class DBApp {
 			e.printStackTrace();
 		}
 	}
+	
+	public ArrayList<Row> getMatchingRows(String strTableName, Hashtable<String, Object> htblColNameValue, String strOperator) {
+		ArrayList<Row> result = new ArrayList<>();
+		
+		Table table = tables.get(strTableName);
+		for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+			String colName = entry.getKey();
+			Object value = entry.getValue();
+
+			ArrayList<Row> acc = new ArrayList<>();
+			ArrayList<Row> temp = new ArrayList<>();
+			BPlusTree tree = loadIndex("indices/" + (strTableName + "::" + colName + ".class"));
+			if (tree != null) { // we have an index for this column
+				ArrayList<Record> rec = tree.find(value);
+				
+				for (int i = 0; i < rec.size(); i++) {
+					Record cur = rec.get(i);
+					
+					if (cur == null) continue;
+					StringTokenizer st = new StringTokenizer(cur.getPageName(), "_");
+					st.nextToken();
+					st = new StringTokenizer(st.nextToken(), ".");
+					
+					int pageNumber = Integer.parseInt(st.nextToken());
+					
+					Page page = table.loadPage(pageNumber);
+					
+					Row row = page.getRows()[cur.getIndex()];
+					
+					temp.add(row);
+				}
+				
+			}
+			else {
+				int totalNumberOfPages = (table.getNextFree() / DBApp.getMaximumRowsCountinPage()) + 1;
+				if(table.getNextFree() % DBApp.getMaximumRowsCountinPage() == 0)
+					totalNumberOfPages--;
+
+				for (int i = 0; i < totalNumberOfPages; i++) {
+					Page page = table.loadPage(i);
+
+					for (Row row : page.getRows()) {
+						if(row == null)
+							continue;
+
+						if (Table.equalObject(value, row.getValues().get(colName))) 
+							temp.add(row);
+					}
+				}
+			}
+			
+			if (result.isEmpty()) 
+				acc = temp;
+			else {
+				if (strOperator.equals("AND")) {
+					for (int i = 0; i < temp.size(); i++) {
+						Row cur = temp.get(i);
+						boolean valid = false;
+						for (int j = 0; j < result.size() && !valid; j++) {
+							Row r = result.get(j);
+							if (cur.equals(r))
+								valid = true;
+						}
+
+						if (valid)
+							acc.add(cur);
+					}
+				}
+				else {
+					acc = result;
+					for (int i = 0; i < temp.size(); i++) {
+						Row cur = temp.get(i);
+						boolean valid = true;
+						for (int j = 0; j < result.size() && valid; j++) {
+							Row r = result.get(j);
+							if (cur.equals(r))
+								valid = false;
+						}
+
+						if (valid)
+							acc.add(cur);
+					}
+				}
+			}
+			
+			result = acc;
+		}
+		
+		return result;
+
+	}
 
 	public void deleteFromTable(String strTableName, Hashtable<String,Object> htblColNameValue, 
 			String strOperator) {
@@ -281,92 +372,9 @@ public class DBApp {
 			if(!checkTable(strTableName, htblColNameValue))
 				throw new TypeMismatchException();
 
-			ArrayList<Row> result = new ArrayList<>();
+			ArrayList<Row> result = getMatchingRows(strTableName, htblColNameValue, strOperator);
 			
 			Table table = tables.get(strTableName);
-			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
-				String colName = entry.getKey();
-				Object value = entry.getValue();
-
-				ArrayList<Row> acc = new ArrayList<>();
-				ArrayList<Row> temp = new ArrayList<>();
-				BPlusTree tree = loadIndex("indices/" + (strTableName + "::" + colName + ".class"));
-				if (tree != null) { // we have an index for this column
-					ArrayList<Record> rec = tree.find(value);
-					
-					for (int i = 0; i < rec.size(); i++) {
-						Record cur = rec.get(i);
-						
-						if (cur == null) continue;
-						StringTokenizer st = new StringTokenizer(cur.getPageName(), "_");
-						st.nextToken();
-						st = new StringTokenizer(st.nextToken(), ".");
-						
-						int pageNumber = Integer.parseInt(st.nextToken());
-						
-						Page page = table.loadPage(pageNumber);
-						
-						Row row = page.getRows()[cur.getIndex()];
-						
-						temp.add(row);
-					}
-					
-				}
-				else {
-					int totalNumberOfPages = (table.getNextFree() / DBApp.getMaximumRowsCountinPage()) + 1;
-					if(table.getNextFree() % DBApp.getMaximumRowsCountinPage() == 0)
-						totalNumberOfPages--;
-
-					for (int i = 0; i < totalNumberOfPages; i++) {
-						Page page = table.loadPage(i);
-
-						for (Row row : page.getRows()) {
-							if(row == null)
-								continue;
-
-							if (Table.equalObject(value, row.getValues().get(colName))) 
-								temp.add(row);
-						}
-					}
-				}
-				
-				if (result.isEmpty()) 
-					acc = temp;
-				else {
-					if (strOperator.equals("AND")) {
-						for (int i = 0; i < temp.size(); i++) {
-							Row cur = temp.get(i);
-							boolean valid = false;
-							for (int j = 0; j < result.size() && !valid; j++) {
-								Row r = result.get(j);
-								if (cur.equals(r))
-									valid = true;
-							}
-
-							if (valid)
-								acc.add(cur);
-						}
-					}
-					else {
-						acc = result;
-						for (int i = 0; i < temp.size(); i++) {
-							Row cur = temp.get(i);
-							boolean valid = true;
-							for (int j = 0; j < result.size() && valid; j++) {
-								Row r = result.get(j);
-								if (cur.equals(r))
-									valid = false;
-							}
-
-							if (valid)
-								acc.add(cur);
-						}
-					}
-				}
-				
-				result = acc;
-			}
-						
 			for (Row row : result) {
 				
 				for (Entry<String, Object> entry : row.getValues().entrySet()) {
@@ -382,9 +390,10 @@ public class DBApp {
 							
 							table.deleteRecord(record);
 						}
+						
+						saveIndex(tree, "indices/" + (strTableName + "::" + colName + ".class"));
 					}
 					
-					saveIndex(tree, "indices/" + (strTableName + "::" + colName + ".class"));
 				}
 			}
 			
@@ -402,10 +411,14 @@ public class DBApp {
 				throw new TableNotFoundException(strTable);
 			if(!checkTable(strTable, htblColNameValue))
 				throw new TypeMismatchException();
-
-			Table table = tables.get(strTable);
-			return table.selectRecords(htblColNameValue, strOperator);
-
+			
+			ArrayList<Row> result = getMatchingRows(strTable, htblColNameValue, strOperator);
+			
+			RowIterator it = new RowIterator();
+			it.addAll(result);
+			
+			return it;
+			
 		} catch(TableNotFoundException e) {
 			e.printStackTrace();
 		} catch(TypeMismatchException e) {
