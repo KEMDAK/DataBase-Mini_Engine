@@ -244,24 +244,35 @@ public class DBApp {
 				throw new TypeMismatchException();
 
 			Table table = tables.get(strTableName);
-
 			BPlusTree tree = loadIndex("indices/" + strTableName + "::" + table.getPrimarykey() + ".class");
 
-			if(tree == null)
-				table.updateRecord(strKey, htblColNameValue);
-			else{
-				ArrayList<Record> records = tree.find(strKey);
-				tree.delete(strKey);
+			ArrayList<Record> records = tree.find(strKey);
+			Hashtable<String, Object> oldValues = null;
+			for (Record record : records) {
+				if(record == null)
+					continue;
 
-				for (Record record : records) {
-					if(record == null)
-						continue;
+				oldValues = table.updateRecordImmediate(record.getPageName(), record.getIndex(), strKey, htblColNameValue);
+			}
 
-					table.updateRecordImmediate(record.getPageName(), record.getIndex(), strKey, htblColNameValue);
-					tree.insert(htblColNameValue.get(table.getPrimarykey()), record.getPageName(), record.getIndex());
+			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
+				String name = entry.getKey();
+				Object value = entry.getValue();
+
+				tree = loadIndex("indices/" + strTableName + "::" + name + ".class");
+
+				if (tree != null) {
+					records = tree.find(oldValues.get(name));
+					tree.delete(oldValues.get(name));
+
+					for (Record record : records) {
+						if(record == null)
+							continue;
+						tree.insert(value, record.getPageName(), record.getIndex());
+					}
+
+					saveIndex(tree, ("indices/" + strTableName + "::" + name + ".class"));
 				}
-
-				saveIndex(tree, ("indices/" + strTableName + "::" + table.getPrimarykey() + ".class"));
 			}
 
 		} catch (TableNotFoundException e) {
@@ -272,10 +283,10 @@ public class DBApp {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public ArrayList<Row> getMatchingRows(String strTableName, Hashtable<String, Object> htblColNameValue, String strOperator) {
 		ArrayList<Row> result = new ArrayList<>();
-		
+
 		Table table = tables.get(strTableName);
 		for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
 			String colName = entry.getKey();
@@ -286,24 +297,24 @@ public class DBApp {
 			BPlusTree tree = loadIndex("indices/" + (strTableName + "::" + colName + ".class"));
 			if (tree != null) { // we have an index for this column
 				ArrayList<Record> rec = tree.find(value);
-				
+
 				for (int i = 0; i < rec.size(); i++) {
 					Record cur = rec.get(i);
-					
+
 					if (cur == null) continue;
 					StringTokenizer st = new StringTokenizer(cur.getPageName(), "_");
 					st.nextToken();
 					st = new StringTokenizer(st.nextToken(), ".");
-					
+
 					int pageNumber = Integer.parseInt(st.nextToken());
-					
+
 					Page page = table.loadPage(pageNumber);
-					
+
 					Row row = page.getRows()[cur.getIndex()];
-					
+
 					temp.add(row);
 				}
-				
+
 			}
 			else {
 				int totalNumberOfPages = (table.getNextFree() / DBApp.getMaximumRowsCountinPage()) + 1;
@@ -322,7 +333,7 @@ public class DBApp {
 					}
 				}
 			}
-			
+
 			if (result.isEmpty()) 
 				acc = temp;
 			else {
@@ -356,10 +367,10 @@ public class DBApp {
 					}
 				}
 			}
-			
+
 			result = acc;
 		}
-		
+
 		return result;
 
 	}
@@ -373,30 +384,30 @@ public class DBApp {
 				throw new TypeMismatchException();
 
 			ArrayList<Row> result = getMatchingRows(strTableName, htblColNameValue, strOperator);
-			
+
 			Table table = tables.get(strTableName);
 			for (Row row : result) {
-				
+
 				for (Entry<String, Object> entry : row.getValues().entrySet()) {
 					String colName = entry.getKey();
 					Object colValue = entry.getValue();
-					
+
 					BPlusTree tree = loadIndex("indices/" + (strTableName + "::" + colName + ".class"));
 					if (tree != null) { // we have an index for this column
 						tree.delete(colValue);
-						
+
 						for (Object o : tree.getLastDeleted()) {
 							Record record = (Record) o;
-							
+
 							table.deleteRecord(record);
 						}
-						
+
 						saveIndex(tree, "indices/" + (strTableName + "::" + colName + ".class"));
 					}
-					
+
 				}
 			}
-			
+
 		} catch (TableNotFoundException e) {
 			e.printStackTrace();
 		} catch(TypeMismatchException e) {
@@ -411,14 +422,14 @@ public class DBApp {
 				throw new TableNotFoundException(strTable);
 			if(!checkTable(strTable, htblColNameValue))
 				throw new TypeMismatchException();
-			
+
 			ArrayList<Row> result = getMatchingRows(strTable, htblColNameValue, strOperator);
-			
+
 			RowIterator it = new RowIterator();
 			it.addAll(result);
-			
+
 			return it;
-			
+
 		} catch(TableNotFoundException e) {
 			e.printStackTrace();
 		} catch(TypeMismatchException e) {

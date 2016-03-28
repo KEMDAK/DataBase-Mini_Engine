@@ -105,7 +105,7 @@ public class Table implements Comparable<Table>, Serializable {
 	}
 
 
-	public void updateRecordImmediate(String pageName, int index, Object strKey, Hashtable<String,Object> htblColNameValue){
+	public Hashtable<String, Object> updateRecordImmediate(String pageName, int index, Object strKey, Hashtable<String,Object> htblColNameValue){
 		StringTokenizer s = new StringTokenizer(pageName, "_");
 		s.nextToken();
 		s = new StringTokenizer(s.nextToken(), ".");
@@ -114,7 +114,12 @@ public class Table implements Comparable<Table>, Serializable {
 		Page page = loadPage(pageNumber);
 
 		Row row = page.getRows()[index];
-
+		
+		Hashtable<String, Object> v = new Hashtable<>();
+		
+		for (Entry<String, Object> entry : row.getValues().entrySet())
+			v.put(entry.getKey(), entry.getValue());
+		
 		if(equalObject(strKey, row.getValues().get(primarykey))){
 			for (Entry<String, Object> entry : htblColNameValue.entrySet()) {
 				row.getValues().put(entry.getKey(), entry.getValue());
@@ -124,6 +129,8 @@ public class Table implements Comparable<Table>, Serializable {
 
 			updatePage(page);
 		}
+		
+		return v;
 	}
 
 	public void deleteRecord(Record record) {	
